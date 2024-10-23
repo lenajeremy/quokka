@@ -4,12 +4,12 @@ export type BuilderObj = Record<string, AnyFunction>;
 export type HookType<T extends string = string> = `use${Capitalize<T>}Query`;
 
 export type QueryHookType<T extends string = string> = `use${Capitalize<
-    T
+  T
 >}Query`;
 export type MutationHookType<T extends string = string> = `use${Capitalize<
-    T
+  T
 >}Mutation`;
 
 export type PrefixUseString<T> = {
-    [Key in keyof T as Key extends string ? HookType<Key> : never]: T[Key];
+  [Key in keyof T as Key extends string ? HookType<Key> : never]: T[Key];
 };
