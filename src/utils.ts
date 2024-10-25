@@ -5,7 +5,7 @@ import type {
   QuokkaApiQueryParams,
 } from "./types/quokka";
 
-export function debounce<T extends AnyFunction>(fn: T, seconds: number): T {
+export function debounce<T extends AnyFunction>(fn: T, ms: number): T {
   let timer: number;
 
   return function () {
@@ -16,7 +16,7 @@ export function debounce<T extends AnyFunction>(fn: T, seconds: number): T {
     timer = setTimeout(() => {
       // @ts-expect-error
       fn.apply(this, args);
-    }, seconds * 1000);
+    }, ms);
   } as unknown as T;
 }
 
@@ -69,7 +69,9 @@ export function resolveRequestParameters<
   T extends QuokkaApiMutationParams | QuokkaApiQueryParams,
 >(apiInit: Omit<CreateApiOptions<any>, "endpoints">, endpointParams: T): T {
   // resolve url
-  const url = resolveUrl(apiInit.baseUrl, endpointParams.url);
+  const url = resolveUrl(apiInit.baseUrl, endpointParams.url, endpointParams.params);
+
+console.log(apiInit, endpointParams)
 
   // resolve headers
   const headers = new Headers();

@@ -1,60 +1,106 @@
-import { useState } from "react";
-import { useFetch } from "quokka";
-import { useDeleteAccountMutation } from "./api/userApi";
-
-type Todo = {
-  userId: string;
-  id: string;
-  completed: boolean;
-  title: string;
-};
+import React from "react";
+import { Color, useSearchImagesQuery } from "./api/pexelsApi";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const { data, loading, trigger, error } = useFetch<void, Todo[], string>(
-    "https://jsonplaceholder.typicode.com/todos/",
-    {},
-    { fetchOnRender: true, fetchOnArgsChange: true },
+  const [query, setQuery] = React.useState("");
+  const [color, setColor] = React.useState<Color | undefined>();
+
+  const {
+    loading: isLoadingImages,
+    data: images,
+    trigger,
+    error,
+  } = useSearchImagesQuery(
+    { query, color },
+    { debouncedDuration: 500, fetchOnArgsChange: true }
   );
 
-  const {} = useDeleteAccountMutation({ userId: "48fash84nmahjf094k" });
-  res
-    .return(
-      <>
-        <div style={{ padding: "2rem" }}>
+  return (
+    <div style={{ padding: "2rem" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <h1>Images</h1>
+        <button disabled={isLoadingImages} onClick={() => trigger({ query })}>
+          Run Again
+        </button>
+      </div>
+
+      <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.currentTarget.value)}
+        />
+
+        <input
+          value={color}
+          type="color"
+          style={{ height: "100%" }}
+          onChange={(e) => setColor(e.currentTarget.value as Color)}
+        />
+        <div
+          style={{
+            height: 28,
+            borderRadius: 14,
+            marginRight: 10,
+            width: 28,
+            background: color,
+          }}
+        />
+        {color}
+        <p onClick={() => setColor(undefined)}>clear color</p>
+      </div>
+
+      {isLoadingImages && <p>Loading...</p>}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4,1fr)",
+          gap: "1.5rem",
+        }}
+      >
+        {images?.photos?.map((image) => (
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
+            key={image.id}
+            style={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
-            <h1>Todos</h1>
-            <button disabled={loading} onClick={() => trigger()}>
-              Run Again
-            </button>
-          </div>
-          {loading && <p>Loading...</p>}
-          {data?.map((d) => (
-            <div key={d.id} style={{ display: "flex", gap: 2 }}>
-              <input type="checkbox" readOnly checked={d.completed} />
-              <p>{d.title}</p>
-            </div>
-          ))}
-          {error && (
-            <p
+            <img
+              src={image.src.large}
+              alt={image.photographer}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            <div
               style={{
-                background: "tomato",
-                padding: "1rem",
-                borderRadius: "1rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
               }}
             >
-              {JSON.stringify(error)}
-            </p>
-          )}
-        </div>
-      </>,
-    );
+              <h3>{image.photographer}</h3>
+              <button>Download</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {error && (
+        <p
+          style={{
+            background: "tomato",
+            padding: "1rem",
+            borderRadius: "1rem",
+          }}
+        >
+          {JSON.stringify(error)}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default App;

@@ -24,20 +24,20 @@ export type QueryHookOptions = {
 
 export type QueryHook<Takes, Returns, Error> = (
   args: Takes,
-  options: QueryHookOptions,
+  options?: QueryHookOptions,
 ) => UseFetchReturn<Takes, Returns, Error>;
 
 type HookSuffix<T> = T extends QuokkaApiQuery<any, any> ? "Query"
   : T extends QuokkaApiMutation<any, any> ? "Mutation"
   : never;
 
-type HookFunction<T> = T extends QuokkaApiQuery<infer Takes, any>
-  ? (val: Takes) => QuokkaApiQueryParams
+type HookFunction<T> = T extends QuokkaApiQuery<infer Takes, infer Returns>
+  ? QueryHook<Takes, Returns, Error>
   : T extends QuokkaApiMutation<infer Takes, any>
-    ? (val: Takes) => QuokkaApiMutationParams
+  ? (val: Takes) => QuokkaApiMutationParams
   : never;
 
 export type Hookify<T> = {
   [K in keyof T as `use${Capitalize<string & K>}${HookSuffix<T[K]>}`]:
-    HookFunction<T[K]>;
+  HookFunction<T[K]>;
 };

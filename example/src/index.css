@@ -25,7 +25,6 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -35,7 +34,7 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+button, input {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;

@@ -3,11 +3,9 @@ import { MutationHookType, QueryHookType } from "./types";
 import {
   Hookify,
   QueryHook,
-  QueryHookOptions,
   QuokkaApiMutationParams,
   QuokkaApiQueryParams,
 } from "./types/quokka";
-import { UseFetchReturn } from "./types/fetch";
 import { debounce, resolveRequestParameters } from "./utils";
 
 export abstract class QuokkaApiAction<
@@ -30,10 +28,7 @@ export abstract class QuokkaApiAction<
     }
   }
 
-  asHook(apiInit: {
-    baseUrl: string;
-    apiName: string;
-  }) {
+  asHook(apiInit: Omit<CreateApiOptions<any>, "endpoints">) {
     if (!this.hasSetKey) {
       throw new Error(
         "Should set key before attempting to generate mutation hook",
@@ -79,10 +74,10 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
     params: (a: Takes) => QuokkaApiQueryParams,
     apiInit: Omit<CreateApiOptions<any>, "endpoints">,
   ): QueryHook<Takes, Returns, Error> {
-    function useQuery(
-      args: Takes,
-      options?: QueryHookOptions,
-    ): UseFetchReturn<Takes, Returns, Error> {
+    const useQuery: QueryHook<Takes, Returns, Error> = (
+      args,
+      options,
+    ) => {
       const initRef = React.useRef(params(args));
       const hasRunFetchRef = React.useRef(false);
       const hasArgsChangedRef = React.useRef(false);
@@ -96,8 +91,12 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
         async function (data: Takes): Promise<Returns | null> {
           const requestParams = resolveRequestParameters(
             apiInit,
-            initRef.current,
+            {
+              ...initRef.current,
+              ...params(data),
+            }
           );
+
           try {
             setLoading(true);
             setData(undefined);
@@ -145,13 +144,14 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
           (options?.fetchOnRender && !hasRunFetchRef.current) ||
           (options?.fetchOnArgsChange && hasArgsChangedRef.current)
         ) {
-          debouncedTrigger(init?.body as TArgs);
+          debouncedTrigger(args);
           hasRunFetchRef.current = true;
         }
-      }, [options, input, init, debouncedTrigger, args]);
+      }, [options, debouncedTrigger, args, params]);
 
       return { data, trigger, error, loading };
-    }
+    };
+
     return useQuery;
   }
 }
@@ -219,6 +219,8 @@ export class QuokkaApi<T> {
     this.prepareHeaders = init.prepareHeaders;
     this.baseUrl = init.baseUrl;
     this.actions = {} as Hookify<T>;
+
+    this.processEndpoints();
   }
 
   processEndpoints() {
@@ -229,7 +231,11 @@ export class QuokkaApi<T> {
       >,
     ).reduce((acc, [key, mutationOrQuery]) => {
       mutationOrQuery.setKey(key);
-      const hook = mutationOrQuery.asHook();
+      const hook = mutationOrQuery.asHook({
+        baseUrl: this.baseUrl,
+        apiName: this.apiName,
+        prepareHeaders: this.prepareHeaders,
+      });
       acc = { ...acc, ...hook };
       return acc;
     }, {}) as typeof this.actions;
