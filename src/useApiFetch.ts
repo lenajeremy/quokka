@@ -1,32 +1,37 @@
-import React from "react";
 import { debounce } from "./utils.js";
-import type { UseFetchReturn } from "./types/fetch.js";
+import React from "react";
 
-export default function useFetch<
-  TArgs = void,
-  TReturns = void,
-  TError = void,
+type UseFetchReturn<CallArgs, ReturnArgs, TError = unknown> = {
+  data: ReturnArgs | undefined;
+  trigger: (args: CallArgs) => Promise<ReturnArgs | null>;
+  error: TError | undefined;
+  loading: boolean;
+};
+
+export default function useQuery<
+  Takes = void,
+  Returns = void,
+  Error = void,
 >(
-  input: RequestInfo,
-  init?: RequestInit,
+  args: Takes,
   options?: {
     fetchOnRender?: boolean;
     fetchOnArgsChange?: boolean;
     debouncedDuration?: number;
   },
-): UseFetchReturn<TArgs, TReturns, TError> {
+): UseFetchReturn<Takes, Returns, Error> {
   const inputRef = React.useRef(input);
   const initRef = React.useRef(init);
   const hasRunFetchRef = React.useRef(false);
   const hasArgsChangedRef = React.useRef(false);
   const isInitialRenderRef = React.useRef(true);
 
-  const [data, setData] = React.useState<TReturns | undefined>();
-  const [error, setError] = React.useState<TError | undefined>();
+  const [data, setData] = React.useState<Returns | undefined>();
+  const [error, setError] = React.useState<Error | undefined>();
   const [loading, setLoading] = React.useState(false);
 
   const trigger = React.useCallback(
-    async function (data: TArgs): Promise<TReturns | null> {
+    async function (data: Takes): Promise<Returns | null> {
       hasRunFetchRef.current = true;
       try {
         setLoading(true);
@@ -46,7 +51,7 @@ export default function useFetch<
           throw json;
         }
       } catch (err) {
-        setError(err as TError);
+        setError(err as Error);
         throw err;
       } finally {
         setLoading(false);

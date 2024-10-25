@@ -1,9 +1,14 @@
-import { MutationHookType, QueryHookType } from "../types";
+import React from "react";
+import { MutationHookType, QueryHookType } from "./types";
 import {
   Hookify,
+  QueryHook,
+  QueryHookOptions,
   QuokkaApiMutationParams,
   QuokkaApiQueryParams,
-} from "../types/quokka";
+} from "./types/quokka";
+import { UseFetchReturn } from "./types/fetch";
+import { debounce, resolveRequestParameters } from "./utils";
 
 export abstract class QuokkaApiAction<
   ParameterGenerator,
@@ -25,19 +30,32 @@ export abstract class QuokkaApiAction<
     }
   }
 
-  asHook() {
+  asHook(apiInit: {
+    baseUrl: string;
+    apiName: string;
+  }) {
     if (!this.hasSetKey) {
       throw new Error(
         "Should set key before attempting to generate mutation hook",
       );
     }
     return {
-      [this.generateHook()]: this.generateParams,
+      [this.generateHookName()]: this.generateHook(
+        this.generateParams,
+        apiInit,
+      ),
     };
   }
 
-  protected generateHook(): HookType {
+  protected generateHookName(): HookType {
     return "NOT IMPLEMENTED" as HookType;
+  }
+
+  protected generateHook(
+    params: ParameterGenerator,
+    apiInit: Omit<CreateApiOptions<any>, "endpoints">,
+  ): unknown {
+    return "NOT IMPLEMENTED";
   }
 }
 
@@ -49,12 +67,92 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
     super(generateParams);
   }
 
-  protected generateHook(): QueryHookType<string> {
+  protected generateHookName(): QueryHookType<string> {
     const capitalized = (this.requestName.charAt(0).toUpperCase() +
       this.requestName.slice(1)) as Capitalize<string>;
     const hook = `use${capitalized}Query` as QueryHookType<string>;
     this.nameOfHook = hook;
     return hook;
+  }
+
+  protected generateHook(
+    params: (a: Takes) => QuokkaApiQueryParams,
+    apiInit: Omit<CreateApiOptions<any>, "endpoints">,
+  ): QueryHook<Takes, Returns, Error> {
+    function useQuery(
+      args: Takes,
+      options?: QueryHookOptions,
+    ): UseFetchReturn<Takes, Returns, Error> {
+      const initRef = React.useRef(params(args));
+      const hasRunFetchRef = React.useRef(false);
+      const hasArgsChangedRef = React.useRef(false);
+      const isInitialRenderRef = React.useRef(true);
+
+      const [data, setData] = React.useState<Returns | undefined>();
+      const [error, setError] = React.useState<Error | undefined>();
+      const [loading, setLoading] = React.useState(false);
+
+      const trigger = React.useCallback(
+        async function (data: Takes): Promise<Returns | null> {
+          const requestParams = resolveRequestParameters(
+            apiInit,
+            initRef.current,
+          );
+          try {
+            setLoading(true);
+            setData(undefined);
+            setError(undefined);
+
+            const res = await fetch(requestParams.url, {
+              method: requestParams.method,
+              headers: requestParams.headers,
+            });
+            const json = await res.json();
+
+            if (res.ok) {
+              setData(json);
+              return json;
+            } else {
+              throw json;
+            }
+          } catch (err) {
+            setError(err as Error);
+            throw err;
+          } finally {
+            setLoading(false);
+          }
+        },
+        [],
+      );
+
+      const debouncedTrigger = React.useMemo(
+        () => debounce(trigger, options?.debouncedDuration || 0),
+        [trigger, options?.debouncedDuration],
+      );
+
+      React.useEffect(() => {
+        if (isInitialRenderRef.current) {
+          isInitialRenderRef.current = false;
+          hasArgsChangedRef.current = false;
+        } else {
+          hasArgsChangedRef.current =
+            JSON.stringify(initRef.current) !== JSON.stringify(params(args));
+        }
+
+        initRef.current = params(args);
+
+        if (
+          (options?.fetchOnRender && !hasRunFetchRef.current) ||
+          (options?.fetchOnArgsChange && hasArgsChangedRef.current)
+        ) {
+          debouncedTrigger(init?.body as TArgs);
+          hasRunFetchRef.current = true;
+        }
+      }, [options, input, init, debouncedTrigger, args]);
+
+      return { data, trigger, error, loading };
+    }
+    return useQuery;
   }
 }
 
@@ -66,7 +164,7 @@ export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
     super(generateParams);
   }
 
-  protected generateHook(): MutationHookType<string> {
+  protected generateHookName(): MutationHookType<string> {
     const capitalized = this.requestName.charAt(0).toUpperCase() +
       this.requestName.slice(1) as Capitalize<string>;
     const hook = `use${capitalized}Mutation` as MutationHookType<string>;

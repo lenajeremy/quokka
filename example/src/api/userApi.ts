@@ -61,9 +61,8 @@ const userApi = createApi({
   }),
 });
 
-
 export const {
-    useDeleteAccountMutation,
-    useGetUserDetailsQuery,
-    useUpdateUserProfileMutation
-} = userApi.actions
+  useDeleteAccountMutation,
+  useGetUserDetailsQuery,
+  useUpdateUserProfileMutation,
+} = userApi.actions;

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createApi, useFetch } from "quokka";
+import { useFetch } from "quokka";
+import { useDeleteAccountMutation } from "./api/userApi";
 
 type Todo = {
   userId: string;
@@ -16,42 +17,44 @@ function App() {
     { fetchOnRender: true, fetchOnArgsChange: true },
   );
 
-  return (
-    <>
-      <div style={{ padding: "2rem" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <h1>Todos</h1>
-          <button disabled={loading} onClick={() => trigger()}>
-            Run Again
-          </button>
-        </div>
-        {loading && <p>Loading...</p>}
-        {data?.map((d) => (
-          <div key={d.id} style={{ display: "flex", gap: 2 }}>
-            <input type="checkbox" readOnly checked={d.completed} />
-            <p>{d.title}</p>
-          </div>
-        ))}
-        {error && (
-          <p
+  const {} = useDeleteAccountMutation({ userId: "48fash84nmahjf094k" });
+  res
+    .return(
+      <>
+        <div style={{ padding: "2rem" }}>
+          <div
             style={{
-              background: "tomato",
-              padding: "1rem",
-              borderRadius: "1rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            {JSON.stringify(error)}
-          </p>
-        )}
-      </div>
-    </>
-  );
+            <h1>Todos</h1>
+            <button disabled={loading} onClick={() => trigger()}>
+              Run Again
+            </button>
+          </div>
+          {loading && <p>Loading...</p>}
+          {data?.map((d) => (
+            <div key={d.id} style={{ display: "flex", gap: 2 }}>
+              <input type="checkbox" readOnly checked={d.completed} />
+              <p>{d.title}</p>
+            </div>
+          ))}
+          {error && (
+            <p
+              style={{
+                background: "tomato",
+                padding: "1rem",
+                borderRadius: "1rem",
+              }}
+            >
+              {JSON.stringify(error)}
+            </p>
+          )}
+        </div>
+      </>,
+    );
 }
 
 export default App;

@@ -23,4 +23,3 @@ export type Hookify<T> = {
   [K in keyof T as `use${Capitalize<string & K>}${HookSuffix<T[K]>}`]:
     HookFunction<T[K]>;
 };
-export {};

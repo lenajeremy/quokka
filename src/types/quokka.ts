@@ -1,4 +1,5 @@
-import { QuokkaApiMutation, QuokkaApiQuery } from "../src/api";
+import { QuokkaApiMutation, QuokkaApiQuery } from "../api";
+import { UseFetchReturn } from "./fetch";
 
 export type QuokkaApiQueryParams = {
   url: string;
@@ -12,7 +13,19 @@ export type QuokkaApiMutationParams = {
   params?: Record<string, any>;
   method: "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   body?: BodyInit | Record<string, any>;
+  headers?: Headers;
 };
+
+export type QueryHookOptions = {
+  fetchOnRender?: boolean;
+  fetchOnArgsChange?: boolean;
+  debouncedDuration?: number;
+};
+
+export type QueryHook<Takes, Returns, Error> = (
+  args: Takes,
+  options: QueryHookOptions,
+) => UseFetchReturn<Takes, Returns, Error>;
 
 type HookSuffix<T> = T extends QuokkaApiQuery<any, any> ? "Query"
   : T extends QuokkaApiMutation<any, any> ? "Mutation"

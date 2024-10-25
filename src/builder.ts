@@ -3,7 +3,7 @@ import {
   BuilderObj,
   HookType,
   PrefixUseString,
-} from "../types/index.js";
+} from "./types/index.js";
 import { identifierToHook } from "./utils.js";
 
 export function createBuilder<T extends BuilderObj>(
