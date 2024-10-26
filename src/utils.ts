@@ -69,9 +69,13 @@ export function resolveRequestParameters<
   T extends QuokkaApiMutationParams | QuokkaApiQueryParams,
 >(apiInit: Omit<CreateApiOptions<any>, "endpoints">, endpointParams: T): T {
   // resolve url
-  const url = resolveUrl(apiInit.baseUrl, endpointParams.url, endpointParams.params);
+  const url = resolveUrl(
+    apiInit.baseUrl,
+    endpointParams.url,
+    endpointParams.params,
+  );
 
-console.log(apiInit, endpointParams)
+  console.log(apiInit, endpointParams);
 
   // resolve headers
   const headers = new Headers();

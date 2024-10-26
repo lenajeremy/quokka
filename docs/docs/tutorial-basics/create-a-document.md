@@ -20,7 +20,8 @@ Create a Markdown file at `docs/hello.md`:
 This is my **first Docusaurus document**!
 ```
 
-A new document is now available at [http://localhost:3000/docs/hello](http://localhost:3000/docs/hello).
+A new document is now available at
+[http://localhost:3000/docs/hello](http://localhost:3000/docs/hello).
 
 ## Configure the Sidebar
 
@@ -44,13 +45,13 @@ It is also possible to create your sidebar explicitly in `sidebars.js`:
 ```js title="sidebars.js"
 export default {
   tutorialSidebar: [
-    'intro',
+    "intro",
     // highlight-next-line
-    'hello',
+    "hello",
     {
-      type: 'category',
-      label: 'Tutorial',
-      items: ['tutorial-basics/create-a-document'],
+      type: "category",
+      label: "Tutorial",
+      items: ["tutorial-basics/create-a-document"],
     },
   ],
 };

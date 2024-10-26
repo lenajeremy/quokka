@@ -4,10 +4,7 @@ import type {
   QuokkaApiMutationParams,
   QuokkaApiQueryParams,
 } from "./types/quokka";
-export declare function debounce<T extends AnyFunction>(
-  fn: T,
-  seconds: number,
-): T;
+export declare function debounce<T extends AnyFunction>(fn: T, ms: number): T;
 export declare function identifierToHook<T extends string>(
   identifier: T,
 ): HookType<T>;

@@ -18,9 +18,16 @@ export type QueryHookOptions = {
   fetchOnArgsChange?: boolean;
   debouncedDuration?: number;
 };
+export type MutationHookOptions = {
+  invalidates?: string[] | string;
+  debouncedDuration?: number;
+};
 export type QueryHook<Takes, Returns, Error> = (
   args: Takes,
-  options: QueryHookOptions,
+  options?: QueryHookOptions,
+) => UseFetchReturn<Takes, Returns, Error>;
+export type MutationHook<Takes, Returns, Error> = (
+  options?: MutationHookOptions,
 ) => UseFetchReturn<Takes, Returns, Error>;
 type HookSuffix<T> = T extends QuokkaApiQuery<any, any> ? "Query"
   : T extends QuokkaApiMutation<any, any> ? "Mutation"

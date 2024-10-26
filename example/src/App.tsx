@@ -1,5 +1,6 @@
 import React from "react";
 import { Color, useSearchImagesQuery } from "./api/pexelsApi";
+import { useUpdatePostMutation } from "./api/typicodeApi";
 
 function App() {
   const [query, setQuery] = React.useState("");
@@ -8,12 +9,13 @@ function App() {
   const {
     loading: isLoadingImages,
     data: images,
-    trigger,
     error,
   } = useSearchImagesQuery(
     { query, color },
-    { debouncedDuration: 500, fetchOnArgsChange: true }
+    { debouncedDuration: 500, fetchOnArgsChange: true },
   );
+
+  const { trigger, data } = useUpdatePostMutation();
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -25,10 +27,24 @@ function App() {
         }}
       >
         <h1>Images</h1>
-        <button disabled={isLoadingImages} onClick={() => trigger({ query })}>
+        <button
+          disabled={isLoadingImages}
+          onClick={() =>
+            trigger({
+              id: "10",
+              postDetails: {
+                id: 10,
+                userId: 40,
+                title: "something interesting",
+                body: "what do you think?",
+              },
+            })}
+        >
           Run Again
         </button>
       </div>
+
+      <pre>{JSON.stringify(data, null, 3)}</pre>
 
       <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
         <input

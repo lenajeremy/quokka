@@ -2,6 +2,7 @@ import React from "react";
 import { MutationHookType, QueryHookType } from "./types";
 import {
   Hookify,
+  MutationHook,
   QueryHook,
   QuokkaApiMutationParams,
   QuokkaApiQueryParams,
@@ -10,12 +11,13 @@ import { debounce, resolveRequestParameters } from "./utils";
 
 export abstract class QuokkaApiAction<
   ParameterGenerator,
-  HookType extends string,
+  HookNameType extends string,
+  HookType,
 > {
   protected generateParams: ParameterGenerator;
   protected requestName = "";
   protected hasSetKey = false;
-  nameOfHook: HookType | undefined;
+  nameOfHook: HookNameType | undefined;
 
   constructor(generateParams: ParameterGenerator) {
     this.generateParams = generateParams;
@@ -42,21 +44,22 @@ export abstract class QuokkaApiAction<
     };
   }
 
-  protected generateHookName(): HookType {
-    return "NOT IMPLEMENTED" as HookType;
+  protected generateHookName(): HookNameType {
+    return "NOT IMPLEMENTED" as HookNameType;
   }
 
   protected generateHook(
     params: ParameterGenerator,
     apiInit: Omit<CreateApiOptions<any>, "endpoints">,
-  ): unknown {
-    return "NOT IMPLEMENTED";
+  ): HookType {
+    throw new Error("Not implemented");
   }
 }
 
 export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
   (a: Takes) => QuokkaApiQueryParams,
-  QueryHookType<string>
+  QueryHookType<string>,
+  QueryHook<Takes, Returns, Error>
 > {
   constructor(generateParams: (a: Takes) => QuokkaApiQueryParams) {
     super(generateParams);
@@ -73,7 +76,7 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
   protected generateHook(
     params: (a: Takes) => QuokkaApiQueryParams,
     apiInit: Omit<CreateApiOptions<any>, "endpoints">,
-  ): QueryHook<Takes, Returns, Error> {
+  ) {
     const useQuery: QueryHook<Takes, Returns, Error> = (
       args,
       options,
@@ -94,7 +97,7 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
             {
               ...initRef.current,
               ...params(data),
-            }
+            },
           );
 
           try {
@@ -158,7 +161,8 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
 
 export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
   (a: Takes) => QuokkaApiMutationParams,
-  MutationHookType<string>
+  MutationHookType<string>,
+  MutationHook<Takes, Returns, Error>
 > {
   constructor(generateParams: (a: Takes) => QuokkaApiMutationParams) {
     super(generateParams);
@@ -170,6 +174,85 @@ export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
     const hook = `use${capitalized}Mutation` as MutationHookType<string>;
     this.nameOfHook = hook;
     return hook;
+  }
+
+  protected generateHook(
+    params: (a: Takes) => QuokkaApiMutationParams,
+    apiInit: Omit<CreateApiOptions<any>, "endpoints">,
+  ) {
+    const useMutation: MutationHook<Takes, Returns, Error> = (
+      options,
+    ) => {
+      const [data, setData] = React.useState<Returns | undefined>();
+      const [error, setError] = React.useState<Error | undefined>();
+      const [loading, setLoading] = React.useState(false);
+
+      const trigger = React.useCallback(
+        async function (data: Takes): Promise<Returns | null> {
+          const requestParams = resolveRequestParameters(
+            apiInit,
+            params(data),
+          );
+
+          try {
+            setLoading(true);
+            setData(undefined);
+            setError(undefined);
+
+            const res = await fetch(requestParams.url, {
+              method: requestParams.method,
+              headers: requestParams.headers,
+              body: requestParams.body instanceof FormData
+                ? requestParams.body
+                : JSON.stringify(requestParams.body),
+            });
+            const json = await res.json();
+
+            if (res.ok) {
+              setData(json);
+              return json;
+            } else {
+              throw json;
+            }
+          } catch (err) {
+            setError(err as Error);
+            throw err;
+          } finally {
+            setLoading(false);
+          }
+        },
+        [],
+      );
+
+      const debouncedTrigger = React.useMemo(
+        () => debounce(trigger, options?.debouncedDuration || 0),
+        [trigger, options?.debouncedDuration],
+      );
+
+      // React.useEffect(() => {
+      //   if (isInitialRenderRef.current) {
+      //     isInitialRenderRef.current = false;
+      //     hasArgsChangedRef.current = false;
+      //   } else {
+      //     hasArgsChangedRef.current =
+      //       JSON.stringify(initRef.current) !== JSON.stringify(params(args));
+      //   }
+
+      //   initRef.current = params(args);
+
+      //   if (
+      //     (options?.fetchOnRender && !hasRunFetchRef.current) ||
+      //     (options?.fetchOnArgsChange && hasArgsChangedRef.current)
+      //   ) {
+      //     debouncedTrigger(args);
+      //     hasRunFetchRef.current = true;
+      //   }
+      // }, [options, debouncedTrigger, args, params]);
+
+      return { data, trigger: debouncedTrigger, error, loading };
+    };
+
+    return useMutation;
   }
 }
 
@@ -223,7 +306,7 @@ export class QuokkaApi<T> {
     this.processEndpoints();
   }
 
-  processEndpoints() {
+  private processEndpoints() {
     const d = Object.entries(
       this.endpoints as Record<
         string,

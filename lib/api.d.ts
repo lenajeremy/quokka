@@ -1,6 +1,7 @@
 import { MutationHookType, QueryHookType } from "./types";
 import {
   Hookify,
+  MutationHook,
   QueryHook,
   QuokkaApiMutationParams,
   QuokkaApiQueryParams,
@@ -41,6 +42,10 @@ export declare class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
 > {
   constructor(generateParams: (a: Takes) => QuokkaApiMutationParams);
   protected generateHookName(): MutationHookType<string>;
+  protected generateHook(
+    params: (a: Takes) => QuokkaApiMutationParams,
+    apiInit: Omit<CreateApiOptions<any>, "endpoints">,
+  ): MutationHook<Takes, Returns, Error>;
 }
 export declare class QuokkaRequestBuilder {
   query: <Takes, Returns>(
@@ -65,7 +70,7 @@ export declare class QuokkaApi<T> {
   private builder;
   actions: Hookify<T>;
   constructor(init: CreateApiOptions<T>);
-  processEndpoints(): void;
+  private processEndpoints;
 }
 export declare function createApi<
   T extends Record<
