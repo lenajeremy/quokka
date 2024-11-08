@@ -1,6 +1,7 @@
 import React from "react";
 import { Color, useSearchImagesQuery } from "./api/pexelsApi";
 import { useUpdatePostMutation } from "./api/typicodeApi";
+import { QuokkaContextProvider } from "quokka";
 
 function App() {
   const [query, setQuery] = React.useState("");
@@ -12,13 +13,14 @@ function App() {
     error,
   } = useSearchImagesQuery(
     { query, color },
-    { debouncedDuration: 500, fetchOnArgsChange: true },
+    { debouncedDuration: 500, fetchOnArgsChange: true }
   );
 
-  const { trigger, data } = useUpdatePostMutation();
+  const { trigger, data, error: updateMutationError } = useUpdatePostMutation();
 
   return (
     <div style={{ padding: "2rem" }}>
+      <pre>{updateMutationError?.stack}</pre>
       <div
         style={{
           display: "flex",
@@ -31,14 +33,15 @@ function App() {
           disabled={isLoadingImages}
           onClick={() =>
             trigger({
-              id: "10",
+              id: "1",
               postDetails: {
-                id: 10,
+                id: 1,
                 userId: 40,
                 title: "something interesting",
                 body: "what do you think?",
               },
-            })}
+            })
+          }
         >
           Run Again
         </button>
@@ -112,11 +115,17 @@ function App() {
             borderRadius: "1rem",
           }}
         >
-          {JSON.stringify(error)}
+          {error.stack}
         </p>
       )}
     </div>
   );
 }
 
-export default App;
+export default function Main() {
+  return (
+    <QuokkaContextProvider>
+      <App />
+    </QuokkaContextProvider>
+  );
+}
