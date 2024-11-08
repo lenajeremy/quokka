@@ -7,7 +7,8 @@ import {
   QuokkaApiMutationParams,
   QuokkaApiQueryParams,
 } from "./types/quokka";
-import { debounce, resolveRequestParameters } from "./utils";
+import { debounce, generateRequestKey, resolveRequestParameters } from "./utils";
+import { useQuokkaContext } from "./context";
 
 export abstract class QuokkaApiAction<
   ParameterGenerator,
@@ -77,6 +78,8 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
     params: (a: Takes) => QuokkaApiQueryParams,
     apiInit: Omit<CreateApiOptions<any>, "endpoints">,
   ) {
+    const queryThis = this
+
     const useQuery: QueryHook<Takes, Returns, Error> = (
       args,
       options,
@@ -90,8 +93,10 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
       const [error, setError] = React.useState<Error | undefined>();
       const [loading, setLoading] = React.useState(false);
 
+      const { update, get } = useQuokkaContext()
+
       const trigger = React.useCallback(
-        async function (data: Takes): Promise<Returns | null> {
+        async function (data: Takes, useCache = false): Promise<Returns | null> {
           const requestParams = resolveRequestParameters(
             apiInit,
             {
@@ -100,28 +105,38 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
             },
           );
 
-          try {
-            setLoading(true);
-            setData(undefined);
-            setError(undefined);
+          const key = await generateRequestKey(requestParams)
+          const value = get<Returns>(apiInit.apiName, queryThis.nameOfHook!, key)
 
-            const res = await fetch(requestParams.url, {
-              method: requestParams.method,
-              headers: requestParams.headers,
-            });
-            const json = await res.json();
+          if (value && useCache) {
+            setData(value)
+            return value
+          } else {
+            try {
+              setLoading(true);
+              setData(undefined);
+              setError(undefined);
 
-            if (res.ok) {
-              setData(json);
-              return json;
-            } else {
-              throw json;
+              const res = await fetch(requestParams.url, {
+                method: requestParams.method,
+                headers: requestParams.headers,
+              });
+              const json = await res.json();
+
+              if (res.ok) {
+                setData(json);
+                console.log('gotten from api... updating cache')
+                update(apiInit.apiName, queryThis.nameOfHook!, key, json)
+                return json;
+              } else {
+                throw json;
+              }
+            } catch (err) {
+              setError(err as Error);
+              throw err;
+            } finally {
+              setLoading(false);
             }
-          } catch (err) {
-            setError(err as Error);
-            throw err;
-          } finally {
-            setLoading(false);
           }
         },
         [],
@@ -147,7 +162,7 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
           (options?.fetchOnRender && !hasRunFetchRef.current) ||
           (options?.fetchOnArgsChange && hasArgsChangedRef.current)
         ) {
-          debouncedTrigger(args);
+          debouncedTrigger(args, true);
           hasRunFetchRef.current = true;
         }
       }, [options, debouncedTrigger, args, params]);
@@ -180,6 +195,7 @@ export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
     params: (a: Takes) => QuokkaApiMutationParams,
     apiInit: Omit<CreateApiOptions<any>, "endpoints">,
   ) {
+    const queryThis = this
     const useMutation: MutationHook<Takes, Returns, Error> = (
       options,
     ) => {
@@ -187,12 +203,16 @@ export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
       const [error, setError] = React.useState<Error | undefined>();
       const [loading, setLoading] = React.useState(false);
 
+      const c = useQuokkaContext()
+
       const trigger = React.useCallback(
         async function (data: Takes): Promise<Returns | null> {
           const requestParams = resolveRequestParameters(
             apiInit,
             params(data),
           );
+
+          const key = await generateRequestKey(requestParams)
 
           try {
             setLoading(true);

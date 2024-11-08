@@ -40,7 +40,7 @@ function resolveUrl(
   // combining the urls need some work
   let url = new URL(
     (baseUrl.endsWith("/") ? baseUrl.slice(0, baseUrl.length - 1) : baseUrl) +
-      (path.startsWith("/") ? path : `/${path}`),
+    (path.startsWith("/") ? path : `/${path}`),
   );
 
   Object.entries(params || {}).forEach((entry) => {
@@ -75,8 +75,6 @@ export function resolveRequestParameters<
     endpointParams.params,
   );
 
-  console.log(apiInit, endpointParams);
-
   // resolve headers
   const headers = new Headers();
   if (apiInit.prepareHeaders) {
@@ -104,4 +102,40 @@ export function resolveRequestParameters<
       body: endpointParams.body,
     } as typeof endpointParams;
   }
+}
+
+export async function generateRequestKey(requestParams: QuokkaApiQueryParams | QuokkaApiMutationParams): Promise<string> {
+  const sortedParams = sortKeys({ ...requestParams })
+  const requestKey = await generateSHA256Hash(JSON.stringify(sortedParams))
+  return requestKey
+}
+
+function sortKeys<T = string | number | object | any[]>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map(sortKeys) as T;
+  } else if (isObject(obj)) {
+    return Object.keys(obj)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = sortKeys(obj[key]);
+        return acc;
+      }, {} as Record<string, any>) as T;
+  } else {
+    return obj;
+  }
+}
+
+function isObject(obj: any): obj is Record<string, any> {
+  return obj !== null && typeof obj === 'object'
+}
+
+async function generateSHA256Hash(message: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
 }
