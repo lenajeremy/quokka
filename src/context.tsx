@@ -20,8 +20,7 @@ type QuokkaContextType = {
 
 const GeneralQuokkaContext = React.createContext<QuokkaContextType>({
     apis: {},
-    setApi: (api) => {
-    },
+    setApi: () => {},
 });
 
 export function useQuokkaContext() {

@@ -115,7 +115,7 @@ function App() {
             borderRadius: "1rem",
           }}
         >
-          {error.stack}
+          {JSON.stringify(error, null, 3)}
         </p>
       )}
     </div>
