@@ -106,7 +106,9 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
           );
 
           const key = await generateRequestKey(requestParams)
+          console.log("request key", key)
           const value = get<Returns>(apiInit.apiName, queryThis.nameOfHook!, key)
+          console.log('request value', value)
 
           if (value && useCache) {
             setData(value)

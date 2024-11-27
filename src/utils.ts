@@ -1,9 +1,6 @@
-import type { AnyFunction, HookType } from "./types/index";
-import { CreateApiOptions } from "./api";
-import type {
-  QuokkaApiMutationParams,
-  QuokkaApiQueryParams,
-} from "./types/quokka";
+import type {AnyFunction, HookType} from "./types";
+import {CreateApiOptions} from "./api";
+import type {QuokkaApiMutationParams, QuokkaApiQueryParams,} from "./types/quokka";
 
 export function debounce<T extends AnyFunction>(fn: T, ms: number): T {
   let timer: number;
@@ -29,7 +26,7 @@ export function identifierToHook<T extends string>(identifier: T): HookType<T> {
 function isQueryParams(
   p: QuokkaApiMutationParams | QuokkaApiQueryParams,
 ): p is QuokkaApiQueryParams {
-  return Object.hasOwn(p, "body") === false;
+  return !Object.hasOwn(p, "body");
 }
 
 function resolveUrl(
@@ -55,7 +52,7 @@ function mergeHeaders(
   into: Headers,
 ): Headers {
   /// the more recent headers should take preference and
-  /// overwrite the content of the least recently added onces
+  /// overwrite the content of the least recently added once
   /// This means that the order of hierarchy is left to right
   for (let h of headers) {
     h?.forEach((value, key) => {
@@ -106,8 +103,7 @@ export function resolveRequestParameters<
 
 export async function generateRequestKey(requestParams: QuokkaApiQueryParams | QuokkaApiMutationParams): Promise<string> {
   const sortedParams = sortKeys({ ...requestParams })
-  const requestKey = await generateSHA256Hash(JSON.stringify(sortedParams))
-  return requestKey
+  return await generateSHA256Hash(JSON.stringify(sortedParams))
 }
 
 function sortKeys<T = string | number | object | any[]>(obj: T): T {
