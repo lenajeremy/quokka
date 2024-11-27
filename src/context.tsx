@@ -5,10 +5,12 @@ const GeneralQuokkaContext = React.createContext<QuokkaContextType>({
     apis: {},
     setApi: () => {
     },
+    getState: () => {
+    }
 });
 
 export function useQuokkaContext() {
-    const {apis, setApi} = React.useContext(GeneralQuokkaContext);
+    const {apis, setApi, getState} = React.useContext(GeneralQuokkaContext);
     const apisRef = React.useRef(apis);
 
     React.useEffect(() => {
@@ -51,16 +53,20 @@ export function useQuokkaContext() {
                 return apis[apiName][key][hookName][id] as T
             }
         },
+        getState
     };
 }
 
-export function QuokkaContextProvider({children}: { children: React.ReactNode; }) {
+export function QuokkaProvider<RootState>({children, getState}: {
+    children: React.ReactNode;
+    getState: () => RootState
+}) {
     const [apis, setApi] = React.useState<
         Record<string, QuokkaSingleApiContext>
     >({});
 
     return (
-        <GeneralQuokkaContext.Provider value={{apis, setApi}}>
+        <GeneralQuokkaContext.Provider value={{apis, setApi, getState}}>
             {children}
         </GeneralQuokkaContext.Provider>
     );

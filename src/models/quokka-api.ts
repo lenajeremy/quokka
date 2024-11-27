@@ -6,7 +6,7 @@ import {QuokkaApiQuery} from "./api-query";
 export class QuokkaApi<T> {
     private endpoints: T;
     private readonly apiName: string;
-    private readonly prepareHeaders?: (globalState: any, headers: Headers) => Headers;
+    private readonly prepareHeaders?: (getState: <T>() => T, headers: Headers) => Headers;
     private readonly baseUrl: string;
 
     private readonly builder: QuokkaRequestBuilder;

@@ -56,6 +56,6 @@ export type MakeHook<T> = {
 export type CreateApiOptions<Endpoints> = {
     apiName: string;
     baseUrl: string;
-    prepareHeaders?: (globalState: any, headers: Headers) => Headers;
+    prepareHeaders?: (getState: () => any, headers: Headers) => Headers;
     endpoints: (builder: QuokkaRequestBuilder) => Endpoints;
 };

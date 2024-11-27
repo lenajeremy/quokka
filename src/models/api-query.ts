@@ -41,7 +41,7 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
             const [error, setError] = React.useState<Error | undefined>();
             const [loading, setLoading] = React.useState(false);
 
-            const {update, get} = useQuokkaContext()
+            const {update, get, getState} = useQuokkaContext()
             let err: any = null
 
             const trigger = React.useCallback(
@@ -52,6 +52,7 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
                             ...initRef.current,
                             ...params(data),
                         },
+                        getState,
                     );
 
                     const key = await generateRequestKey(requestParams)
@@ -72,7 +73,7 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
                             });
                             const json = await res.json();
 
-                            if (!res.ok) {
+                            if (res.ok) {
                                 setData(json);
                                 update(apiInit.apiName, queryThis.nameOfHook!, key, json)
                                 return json;
@@ -114,7 +115,9 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
                     (options?.fetchOnRender && !hasRunFetchRef.current) ||
                     (options?.fetchOnArgsChange && hasArgsChangedRef.current)
                 ) {
-                    debouncedTrigger(args, true).then();
+                    (async function() {
+                        await debouncedTrigger(args, true);
+                    })()
                     hasRunFetchRef.current = true;
                 }
             }, [options, debouncedTrigger, args, params]);

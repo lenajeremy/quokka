@@ -16,4 +16,5 @@ export type QuokkaContextType = {
     setApi: React.Dispatch<
         React.SetStateAction<Record<string, QuokkaSingleApiContext>>
     >;
+    getState: () => any;
 };

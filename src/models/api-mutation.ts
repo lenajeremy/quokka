@@ -4,6 +4,7 @@ import {MutationHook, QuokkaApiMutationParams} from "../types/quokka";
 import {MutationHookType} from "../types";
 import {debounce, resolveRequestParameters} from "../utils";
 import {CreateApiOptions} from "../types/quokka";
+import {useQuokkaContext} from "../context";
 
 export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
     (a: Takes) => QuokkaApiMutationParams,
@@ -33,6 +34,7 @@ export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
             const [data, setData] = React.useState<Returns | undefined>();
             const [error, setError] = React.useState<Error | undefined>();
             const [loading, setLoading] = React.useState(false);
+            const { getState } = useQuokkaContext()
 
             // TODO: when a mutation is done, find the queries which depends on it and update those (or run them again)
             // const c = useQuokkaContext()
@@ -43,6 +45,7 @@ export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
                     const requestParams = resolveRequestParameters(
                         apiInit,
                         params(data),
+                        getState
                     );
 
                     // const key = await generateRequestKey(requestParams)

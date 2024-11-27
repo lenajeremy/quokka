@@ -71,7 +71,7 @@ function mergeHeaders(
  */
 export function resolveRequestParameters<
     T extends QuokkaApiMutationParams | QuokkaApiQueryParams,
->(apiInit: Omit<CreateApiOptions<any>, "endpoints">, endpointParams: T): T {
+>(apiInit: Omit<CreateApiOptions<any>, "endpoints">, endpointParams: T, getState: () => any): T {
     // resolve url
     const url = resolveUrl(
         apiInit.baseUrl,
@@ -83,7 +83,7 @@ export function resolveRequestParameters<
     const headers = new Headers();
     if (apiInit.prepareHeaders) {
         mergeHeaders([
-            apiInit.prepareHeaders({}, new Headers()),
+            apiInit.prepareHeaders(getState, new Headers()),
             endpointParams.headers,
         ], headers);
     } else {

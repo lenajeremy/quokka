@@ -1,12 +1,8 @@
-type QuokkaRequestKey = string;
-type QuokkaResponse = any;
-type QuokkaContextValues = {
-  requests: Record<QuokkaRequestKey, QuokkaResponse>;
-  inValidateRequest: (key: string, value: QuokkaResponse) => void;
+import React from "react";
+export declare function useQuokkaContext(): {
+    update: (apiName: string, hookName: string, id: string, value: unknown) => void;
+    get<T>(apiName: string, hookName: string, id: string): T | undefined;
 };
-declare const QuokkaContext: import("react").Context<QuokkaContextValues>;
-export declare function useQuokkaContext(): QuokkaContextValues;
-export declare const QuokkaContextProvider: import("react").Provider<
-  QuokkaContextValues
->;
-export default QuokkaContext;
+export declare function QuokkaContextProvider({ children }: {
+    children: React.ReactNode;
+}): import("react/jsx-runtime").JSX.Element;
