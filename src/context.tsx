@@ -1,26 +1,10 @@
-import * as React from "react";
-
-type QuokkaRequestContext<
-    HookName extends string = string,
-    Returns = any
-> = Record<HookName, Record<string, Returns>>;
-
-type QuokkaSingleApiContext = {
-    queries: QuokkaRequestContext<string, unknown>;
-    mutations: QuokkaRequestContext<string, unknown>;
-    // tags: T;
-};
-
-type QuokkaContextType = {
-    apis: Record<string, QuokkaSingleApiContext>;
-    setApi: React.Dispatch<
-        React.SetStateAction<Record<string, QuokkaSingleApiContext>>
-    >;
-};
+import React from "react";
+import {QuokkaContextType, QuokkaSingleApiContext} from "./types/context";
 
 const GeneralQuokkaContext = React.createContext<QuokkaContextType>({
     apis: {},
-    setApi: () => {},
+    setApi: () => {
+    },
 });
 
 export function useQuokkaContext() {
@@ -70,7 +54,7 @@ export function useQuokkaContext() {
     };
 }
 
-export function QuokkaContextProvider({ children }: { children: React.ReactNode; }) {
+export function QuokkaContextProvider({children}: { children: React.ReactNode; }) {
     const [apis, setApi] = React.useState<
         Record<string, QuokkaSingleApiContext>
     >({});
@@ -81,5 +65,3 @@ export function QuokkaContextProvider({ children }: { children: React.ReactNode;
         </GeneralQuokkaContext.Provider>
     );
 }
-
-export default GeneralQuokkaContext;
