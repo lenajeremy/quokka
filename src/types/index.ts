@@ -10,4 +10,5 @@ export type QueryHookType<T extends string = string> = `use${Capitalize<T>}Query
  * */
 export type MutationHookType<T extends string = string> = `use${Capitalize<T>}Mutation`;
 
-export type TagType<Tags> = readonly (Tags | ((res: any) => Tags))[]
+export type TagObject<Tags> = { key: Tags, id: string | number | object | boolean | symbol }
+export type TagType<Tags> = readonly (Tags | TagObject<Tags> | ((res: any) => Tags) | ((res: any) => TagObject<Tags>))[]

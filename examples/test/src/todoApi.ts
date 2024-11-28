@@ -15,12 +15,12 @@ export type ApiResponse<T> = {
 
 const todoApi = createApi({
     apiName: "todoApi",
-    tags: ["something interesting", 'hello world', 'user privileges'],
+    tags: ["todos"],
     baseUrl: "http://127.0.0.1:8080/todos",
     endpoints: builder => ({
         getTodos: builder.query<void, ApiResponse<Todo[]>>(() => ({
             url: "/list",
-            providesTags: ['something interesting', 'hello world', 'user privileges']
+            providesTags: ["todos"]
         })),
         createTodo: builder.mutation<Omit<Todo, "id" | "isDone">, ApiResponse<Todo>>((values) => ({
             url: "/create",
@@ -28,13 +28,14 @@ const todoApi = createApi({
             body: {
                 title: values.title,
                 expirationDate: `${values.expirationDate.getDate()}/${values.expirationDate.getMonth() + 1}/${values.expirationDate.getFullYear()}`,
-            }
+            },
+            invalidatesTags: [{ id: "list", key: "todos"}]
         })),
         markAsDone: builder.mutation<{ id: number }, ApiResponse<Todo>>((todoId) => ({
             url: "/mark-as-done",
             method: "PUT",
             body: todoId
-        }))
+        })),
     })
 })
 
@@ -43,3 +44,4 @@ export const {
     useCreateTodoMutation,
     useMarkAsDoneMutation
 } = todoApi.actions
+

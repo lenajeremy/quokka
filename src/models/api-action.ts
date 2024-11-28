@@ -6,7 +6,7 @@ import {MutationHookType, QueryHookType} from "../types";
  * It describes the fields and methods that an API action should have. API are one of two things: Queries or Mutations.
  * */
 export abstract class QuokkaApiAction<
-    ParameterGenerator extends (args: any) => QuokkaApiQueryParams | QuokkaApiMutationParams,
+    ParameterGenerator extends (args: any) => QuokkaApiQueryParams<any> | QuokkaApiMutationParams<any>,
     HookNameType extends QueryHookType | MutationHookType,
     HookType,
 > {
@@ -30,7 +30,7 @@ export abstract class QuokkaApiAction<
         }
     }
 
-    asHook(apiInit: Omit<CreateApiOptions<any>, "endpoints">) {
+    asHook(apiInit: Omit<CreateApiOptions<any, any>, "endpoints">) {
         if (!this.hasSetKey) {
             throw new Error(
                 "Should set key before attempting to generate mutation hook",
@@ -48,6 +48,6 @@ export abstract class QuokkaApiAction<
 
     protected abstract generateHook(
         params: ParameterGenerator,
-        apiInit: Omit<CreateApiOptions<any>, "endpoints">,
+        apiInit: Omit<CreateApiOptions<any, any>, "endpoints">,
     ): HookType
 }

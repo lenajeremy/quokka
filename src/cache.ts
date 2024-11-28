@@ -1,3 +1,5 @@
+import {QuokkaSingleApiContext} from "./types/context";
+
 type CacheEntry<Tags, FetchFunction, Value> = {
     value: Value;
     fetch: FetchFunction
@@ -5,8 +7,19 @@ type CacheEntry<Tags, FetchFunction, Value> = {
 }
 
 class CacheManager {
-    private tags: Record<string, string>
+    private apis: Record<string, QuokkaSingleApiContext>
+    private tags: string[]
+
     constructor() {
-        this.tags = {};
+        this.tags = [];
+        this.apis = {};
+    }
+
+    get() {
+
+    }
+
+    update() {
+
     }
 }

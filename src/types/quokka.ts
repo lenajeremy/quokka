@@ -9,7 +9,7 @@ export type QuokkaApiQueryParams<TagString> = {
     params?: Record<string, any>;
     method?: "GET";
     headers?: Headers;
-    providesTags?: readonly TagString[];
+    providesTags?: TagType<TagString>;
 };
 
 export type QuokkaApiMutationParams<TagString> = {
@@ -18,7 +18,7 @@ export type QuokkaApiMutationParams<TagString> = {
     method: "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
     body?: BodyInit | Record<string, any>;
     headers?: Headers;
-    invalidatesTags?: readonly TagString[];
+    invalidatesTags?: TagType<TagString>;
 };
 
 export type QueryHookOptions = {

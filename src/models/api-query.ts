@@ -115,7 +115,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
                     (options?.fetchOnRender && !hasRunFetchRef.current) ||
                     (options?.fetchOnArgsChange && hasArgsChangedRef.current)
                 ) {
-                    (async function() {
+                    (async function () {
                         await debouncedTrigger(args, true);
                     })()
                     hasRunFetchRef.current = true;
