@@ -5,10 +5,11 @@ import {QuokkaApi} from "./models/quokka-api";
 
 
 export function createApi<
+    TagString extends string,
     T extends Record<
         string,
-        QuokkaApiQuery<any, any> | QuokkaApiMutation<any, any>
-    >,
->(options: CreateApiOptions<T>): QuokkaApi<T> {
-    return new QuokkaApi(options);
+        QuokkaApiQuery<any, any, TagString> | QuokkaApiMutation<any, any, TagString>
+    >
+>(options: CreateApiOptions<T, TagString>): QuokkaApi<T, TagString> {
+    return new QuokkaApi<T, TagString>(options);
 }

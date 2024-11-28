@@ -5,12 +5,12 @@ import {QueryHookType} from "../types";
 import {useQuokkaContext} from "../context";
 import {debounce, generateRequestKey, resolveRequestParameters} from "../utils";
 
-export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
-    (a: Takes) => QuokkaApiQueryParams,
+export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
+    (a: Takes) => QuokkaApiQueryParams<TagsString>,
     QueryHookType,
     QueryHook<Takes, Returns, Error>
 > {
-    constructor(generateParams: (a: Takes) => QuokkaApiQueryParams) {
+    constructor(generateParams: (a: Takes) => QuokkaApiQueryParams<TagsString>) {
         super(generateParams);
     }
 
@@ -23,8 +23,8 @@ export class QuokkaApiQuery<Takes, Returns> extends QuokkaApiAction<
     }
 
     protected generateHook(
-        params: (a: Takes) => QuokkaApiQueryParams,
-        apiInit: Omit<CreateApiOptions<any>, "endpoints">,
+        params: (a: Takes) => QuokkaApiQueryParams<TagsString>,
+        apiInit: Omit<CreateApiOptions<any, TagsString>, "endpoints">,
     ) {
         const queryThis = this
 

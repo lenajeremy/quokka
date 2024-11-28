@@ -6,12 +6,12 @@ import {debounce, resolveRequestParameters} from "../utils";
 import {CreateApiOptions} from "../types/quokka";
 import {useQuokkaContext} from "../context";
 
-export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
-    (a: Takes) => QuokkaApiMutationParams,
+export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiAction<
+    (a: Takes) => QuokkaApiMutationParams<TagString>,
     MutationHookType,
     MutationHook<Takes, Returns, Error>
 > {
-    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams) {
+    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams<TagString>) {
         super(generateParams);
     }
 
@@ -24,8 +24,8 @@ export class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<
     }
 
     protected generateHook(
-        params: (a: Takes) => QuokkaApiMutationParams,
-        apiInit: Omit<CreateApiOptions<any>, "endpoints">,
+        params: (a: Takes) => QuokkaApiMutationParams<TagString>,
+        apiInit: Omit<CreateApiOptions<any, TagString>, "endpoints">,
     ) {
         // const queryThis = this
         const useMutation: MutationHook<Takes, Returns, Error> = (

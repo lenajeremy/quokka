@@ -17,9 +17,9 @@ export function debounce<T extends AnyFunction>(fn: T, ms: number): T {
     } as unknown as T;
 }
 
-function isQueryParams(
-    p: QuokkaApiMutationParams | QuokkaApiQueryParams,
-): p is QuokkaApiQueryParams {
+function isQueryParams<T>(
+    p: QuokkaApiMutationParams<T> | QuokkaApiQueryParams<T>,
+): p is QuokkaApiQueryParams<T> {
     return !Object.hasOwn(p, "body");
 }
 
@@ -70,8 +70,9 @@ function mergeHeaders(
  * - Merging search params
  */
 export function resolveRequestParameters<
-    T extends QuokkaApiMutationParams | QuokkaApiQueryParams,
->(apiInit: Omit<CreateApiOptions<any>, "endpoints">, endpointParams: T, getState: () => any): T {
+    TagString,
+    T extends QuokkaApiMutationParams<TagString> | QuokkaApiQueryParams<TagString>,
+>(apiInit: Omit<CreateApiOptions<any, TagString>, "endpoints">, endpointParams: T, getState: () => any): T {
     // resolve url
     const url = resolveUrl(
         apiInit.baseUrl,
@@ -81,6 +82,7 @@ export function resolveRequestParameters<
 
     // resolve headers
     const headers = new Headers();
+    headers.set("content-type", "application/json");
     if (apiInit.prepareHeaders) {
         mergeHeaders([
             apiInit.prepareHeaders(getState, new Headers()),
@@ -114,7 +116,7 @@ export function resolveRequestParameters<
  * This helps to dedupe request by ensuring that requests with the same parameters (body, url, method, etc.)
  * are resolved to the same key.
  * */
-export async function generateRequestKey(requestParams: QuokkaApiQueryParams | QuokkaApiMutationParams): Promise<string> {
+export async function generateRequestKey<T>(requestParams: QuokkaApiQueryParams<T> | QuokkaApiMutationParams<T>): Promise<string> {
     const sortedParams = sortKeys({...requestParams})
     return await generateSHA256Hash(JSON.stringify(sortedParams))
 }

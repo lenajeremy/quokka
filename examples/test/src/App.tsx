@@ -1,35 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react'
+import {QuokkaProvider} from "../../../src/context.tsx";
+import {Todo, useCreateTodoMutation, useGetTodosQuery, useMarkAsDoneMutation} from "./todoApi.ts";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const {data: todos, loading, trigger} = useGetTodosQuery(undefined, {fetchOnRender: true})
+    const {trigger: createTodo} = useCreateTodoMutation()
+    const [todoTitle, setTodoTitle] = React.useState("")
+    const [expDate, setExpDate] = React.useState(new Date())
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    return (
+        <div>
+            <h1>Hello World</h1>
+            {loading && <p>Loading...</p>}
+            {todos && (
+                <div>
+                    {
+                        todos.data.map(todo => <Task {...todo} key={todo.id}/>)
+                    }
+                </div>
+            )}
+            <button onClick={() => trigger()}>Get New Todos</button>
+            <hr/>
+            <h3>Create Task</h3>
+            <input value={todoTitle} onChange={e => setTodoTitle(e.currentTarget.value)}/>
+            <input type="date" value={expDate.toDateString()}
+                   onChange={e => setExpDate(e.currentTarget.valueAsDate ? e.currentTarget.valueAsDate : new Date())}/>
+            <button onClick={() => createTodo({title: todoTitle, expirationDate: expDate})}>Create Task</button>
+        </div>
+    )
 }
 
-export default App
+function Task(props: Todo) {
+    const {trigger, data, loading} = useMarkAsDoneMutation()
+    return (
+        <div>
+            <input type={"checkbox"} checked={props.isDone} onChange={() => trigger({id: props.id})}/>
+            <p>{props.title} <small>{loading && "making change.."}</small></p>
+            <pre>{JSON.stringify(data, null, 3)}</pre>
+        </div>
+    )
+}
+
+export default function Main() {
+    return (
+        <QuokkaProvider getState={() => {
+        }}>
+            <App/>
+        </QuokkaProvider>
+    )
+}

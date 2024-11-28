@@ -25,7 +25,7 @@ function App() {
         data: images,
         error,
     } = useSearchImagesQuery(
-        {query, color},
+        {query},
         {debouncedDuration: 500, fetchOnArgsChange: true}
     );
 
@@ -46,7 +46,9 @@ function App() {
             </form>
             <div>
                 {people.map(p => (
-                    <div id = {p}>{p} <button onClick={() => removePerson(p)}>x</button></div>
+                    <div id={p}>{p}
+                        <button onClick={() => removePerson(p)}>x</button>
+                    </div>
                 ))}
             </div>
             <pre>{updateMutationError?.stack}</pre>
@@ -57,7 +59,7 @@ function App() {
                     justifyContent: "space-between",
                 }}
             >
-                <h1>Images</h1>
+                <h1>Videos</h1>
                 <button
                     disabled={isLoadingImages}
                     onClick={() =>
@@ -108,19 +110,19 @@ function App() {
             <div
                 style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(4,1fr)",
+                    gridTemplateColumns: "repeat(1,1fr)",
                     gap: "1.5rem",
                 }}
             >
                 {images?.photos?.map((image) => (
                     <div
                         key={image.id}
-                        style={{display: "flex", flexDirection: "column", gap: 2}}
+                        style={{display: "flex", flexDirection: "column", gap: 2, height: "500px"}}
                     >
                         <img
-                            src={image.src.large}
-                            alt={image.photographer}
+                            src={image.src.original}
                             style={{width: "100%", height: "100%", objectFit: "cover"}}
+                            alt = {image.alt}
                         />
                         <div
                             style={{
@@ -129,7 +131,7 @@ function App() {
                                 justifyContent: "space-between",
                             }}
                         >
-                            <h3>{image.photographer}</h3>
+                            <h3>{image.alt || image.photographer}</h3>
                             <button>Download</button>
                         </div>
                     </div>
