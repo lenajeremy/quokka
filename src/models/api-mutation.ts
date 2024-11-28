@@ -1,18 +1,21 @@
 import React from "react";
 import {QuokkaApiAction} from "./api-action";
 import {MutationHook, QuokkaApiMutationParams} from "../types/quokka";
-import {MutationHookType} from "../types";
+import {MutationHookType, TagType} from "../types";
 import {debounce, resolveRequestParameters} from "../utils";
 import {CreateApiOptions} from "../types/quokka";
-import {useQuokkaContext} from "../context";
+import {getCacheManager, useQuokkaContext} from "../context";
+import {QuokkaApi} from "./quokka-api";
 
 export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiAction<
     (a: Takes) => QuokkaApiMutationParams<TagString>,
     MutationHookType,
     MutationHook<Takes, Returns, Error>
 > {
-    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams<TagString>) {
-        super(generateParams);
+    tags?: TagType<TagString>
+
+    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams<TagString>, api: QuokkaApi<any, any>) {
+        super(generateParams, api);
     }
 
     protected generateHookName(): MutationHookType {
@@ -34,7 +37,9 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
             const [data, setData] = React.useState<Returns | undefined>();
             const [error, setError] = React.useState<Error | undefined>();
             const [loading, setLoading] = React.useState(false);
-            const { getState } = useQuokkaContext()
+            const { getState, cacheManager } = useQuokkaContext()
+
+            console.log(cacheManager)
 
             // TODO: when a mutation is done, find the queries which depends on it and update those (or run them again)
             // const c = useQuokkaContext()
@@ -45,7 +50,7 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                     const requestParams = resolveRequestParameters(
                         apiInit,
                         params(data),
-                        getState
+                        getState!
                     );
 
                     // const key = await generateRequestKey(requestParams)
@@ -90,29 +95,20 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                 [trigger, options?.debouncedDuration],
             );
 
-            // React.useEffect(() => {
-            //   if (isInitialRenderRef.current) {
-            //     isInitialRenderRef.current = false;
-            //     hasArgsChangedRef.current = false;
-            //   } else {
-            //     hasArgsChangedRef.current =
-            //       JSON.stringify(initRef.current) !== JSON.stringify(params(args));
-            //   }
-
-            //   initRef.current = params(args);
-
-            //   if (
-            //     (options?.fetchOnRender && !hasRunFetchRef.current) ||
-            //     (options?.fetchOnArgsChange && hasArgsChangedRef.current)
-            //   ) {
-            //     debouncedTrigger(args);
-            //     hasRunFetchRef.current = true;
-            //   }
-            // }, [options, debouncedTrigger, args, params]);
-
             return {data, trigger: debouncedTrigger, error, loading};
         };
 
         return useMutation;
     }
+
+    protected invalidateCache() {
+        const cacheManager = getCacheManager()
+        const queries = this.api.queries
+
+        for (let query of Object.values(queries)) {
+
+        }
+    }
 }
+
+function matchTag

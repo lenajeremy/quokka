@@ -1,17 +1,18 @@
-import {QuokkaSingleApiContext} from "./types/context";
+import {TagType} from "./types";
 
-type CacheEntry<Tags, FetchFunction, Value> = {
-    value: Value;
-    fetch: FetchFunction
-    tags: Tags
+export type CacheEntry<Tags extends string> = {
+    id: string;
+    name: string;
+    payload: any;
+    tags: TagType<Tags>;
 }
 
-class CacheManager {
-    private apis: Record<string, QuokkaSingleApiContext>
-    private tags: string[]
+type ApiEntries<T extends string> = Record<string, Array<CacheEntry<T>>>
+
+export class CacheManager {
+    private apis: ApiEntries<string>
 
     constructor() {
-        this.tags = [];
         this.apis = {};
     }
 

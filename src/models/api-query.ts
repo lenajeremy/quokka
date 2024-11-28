@@ -1,17 +1,20 @@
 import React from "react";
 import {QuokkaApiAction} from "./api-action";
 import {CreateApiOptions, QueryHook, QuokkaApiQueryParams} from "../types/quokka";
-import {QueryHookType} from "../types";
+import {QueryHookType, TagType} from "../types";
 import {useQuokkaContext} from "../context";
 import {debounce, generateRequestKey, resolveRequestParameters} from "../utils";
+import {QuokkaApi} from "./quokka-api";
 
 export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
     (a: Takes) => QuokkaApiQueryParams<TagsString>,
     QueryHookType,
     QueryHook<Takes, Returns, Error>
 > {
-    constructor(generateParams: (a: Takes) => QuokkaApiQueryParams<TagsString>) {
-        super(generateParams);
+    tags?: TagType<TagsString>
+
+    constructor(generateParams: (a: Takes) => QuokkaApiQueryParams<TagsString>, api: QuokkaApi<any, any>) {
+        super(generateParams, api);
     }
 
     protected generateHookName(): QueryHookType {
@@ -41,7 +44,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
             const [error, setError] = React.useState<Error | undefined>();
             const [loading, setLoading] = React.useState(false);
 
-            const {update, get, getState} = useQuokkaContext()
+            const {cacheManager, getState} = useQuokkaContext()
             let err: any = null
 
             const trigger = React.useCallback(
@@ -52,11 +55,11 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
                             ...initRef.current,
                             ...params(data),
                         },
-                        getState,
+                        getState!,
                     );
 
                     const key = await generateRequestKey(requestParams)
-                    const value = get<Returns>(apiInit.apiName, queryThis.nameOfHook!, key)
+                    const value = cacheManager.get<Returns>(apiInit.apiName, queryThis.nameOfHook!, key)
 
                     if (value && fetchFromCache) {
                         setData(value)
@@ -75,7 +78,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
 
                             if (res.ok) {
                                 setData(json);
-                                update(apiInit.apiName, queryThis.nameOfHook!, key, json)
+                                cacheManager.update(apiInit.apiName, queryThis.nameOfHook!, key, json)
                                 return json;
                             } else {
                                 err = json

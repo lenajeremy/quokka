@@ -1,5 +1,6 @@
 import {CreateApiOptions, QuokkaApiMutationParams, QuokkaApiQueryParams} from "../types/quokka";
 import {MutationHookType, QueryHookType} from "../types";
+import {QuokkaApi} from "./quokka-api";
 
 /**
  * `QuokkaApiAction` is the abstract class from which `QuokkaApiQuery` and `QuokkaApiMutation` classes inherit.
@@ -16,11 +17,14 @@ export abstract class QuokkaApiAction<
      * */
     protected generateParams: ParameterGenerator;
     protected requestName = "";
+    protected api: QuokkaApi<any, any>
     protected hasSetKey = false;
     nameOfHook: HookNameType | undefined;
 
-    protected constructor(generateParams: ParameterGenerator) {
+
+    protected constructor(generateParams: ParameterGenerator, api: QuokkaApi<any, any>) {
         this.generateParams = generateParams;
+        this.api = api;
     }
 
     setKey(key: string) {

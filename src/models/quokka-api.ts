@@ -11,13 +11,13 @@ export class QuokkaApi<T, Tags> {
     private readonly baseUrl: string;
     readonly tags: TagType<Tags> | undefined;
     public queries: Record<string, QuokkaApiQuery<any, any, any>>
-    public mutations: Record<string, QuokkaApiMutation<any, any, any>>
+    public mutations: Record<string, QuokkaApiMutation<any, any, any>>;
 
     private readonly builder: QuokkaRequestBuilder<Tags>;
     actions: MakeHook<T, Tags>;
 
     constructor(init: CreateApiOptions<T, Tags>) {
-        this.builder = new QuokkaRequestBuilder();
+        this.builder = new QuokkaRequestBuilder(this);
         this.endpoints = init.endpoints(this.builder);
         this.apiName = init.apiName;
         this.prepareHeaders = init.prepareHeaders;
@@ -36,9 +36,8 @@ export class QuokkaApi<T, Tags> {
                 string,
                 QuokkaApiQuery<any, any, Tags> | QuokkaApiMutation<any, any, Tags>
             >,
-        ).reduce((acc, [key, mutationOrQuery]) => {            mutationOrQuery.setKey(key);
-
-            // update the queries and mutations object
+        ).reduce((acc, [key, mutationOrQuery]) => {
+            mutationOrQuery.setKey(key);
             if (mutationOrQuery instanceof QuokkaApiQuery) {
                 this.queries[key] = mutationOrQuery;
             } else {

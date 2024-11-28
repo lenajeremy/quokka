@@ -1,6 +1,8 @@
-import type {AnyFunction} from "./types";
+import type {AnyFunction, TagType} from "./types";
 import type {QuokkaApiMutationParams, QuokkaApiQueryParams,} from "./types/quokka";
 import type {CreateApiOptions} from "./types/quokka";
+import {QuokkaApiMutation} from "./models/api-mutation";
+import {QuokkaApiQuery} from "./models/api-query";
 
 export function debounce<T extends AnyFunction>(fn: T, ms: number): T {
     let timer: number;
@@ -172,4 +174,57 @@ async function generateSHA256Hash(message: string): Promise<string> {
     return Array.from(new Uint8Array(hashBuffer))
         .map(byte => byte.toString(16).padStart(2, '0'))
         .join('');
+}
+
+function hasMatchingTags<T>(m: QuokkaApiMutation<any, any, T>, q: QuokkaApiQuery<any, any, T>): boolean {
+    let res = false
+
+    if (!m.tags || !q.tags) {
+        return false
+    }
+
+    for (const mTag of m.tags) {
+        for (const qTag of q.tags) {
+            if type
+        }
+    }
+
+    return res
+}
+
+type ValidObj = number | string | object | null | undefined
+function deepCompare(obj1: ValidObj, obj2: ValidObj) {
+    const primitives = new Set<string>(["number", "string", "undefined"]);
+
+    if (!obj1 || !obj2 || primitives.has(typeof obj2) || primitives.has(typeof obj1)) {
+        return obj1 === obj2
+    }
+
+    if (Array.isArray(obj1)) {
+        if (Array.isArray(obj2)) {
+            if (obj1.length !== obj2.length) {
+                return false;
+            }
+            for (let i = 0; i < obj1.length; i++) {
+                if (!deepCompare(obj1[i], obj2[i])) {
+                    return false
+                }
+            }
+        } else {
+            return false;
+        }
+    } else {
+        if (Array.isArray(obj2)) {
+            return false
+        }
+        if (Object.keys(obj2).length !== Object.keys(obj1).length) {
+            return false
+        }
+        for (const key of Object.keys(obj1)) {
+            if (!deepCompare(obj1[key], obj2[key])) {
+                return false
+            }
+        }
+    }
+    return true;
 }
