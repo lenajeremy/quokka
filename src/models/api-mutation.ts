@@ -110,7 +110,6 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                 const match = cacheEntry.name.match(r)
                 if (match) {
                     const key = match[1].charAt(0).toLowerCase() + match[1].substring(1)
-                    console.log(key, 'calling trigger for', cacheEntry)
                     this.api.queries[key].trigger!(cacheEntry.payload)
                 }
             }

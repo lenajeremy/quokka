@@ -24,6 +24,9 @@ export type QuokkaApiMutationParams<TagString> = {
 export type QueryHookOptions = {
     fetchOnRender?: boolean;
     fetchOnArgsChange?: boolean;
+    refetchOnFocus?: boolean;
+    pollingInterval?: number;
+    refetchOnConnection?: boolean;
     debouncedDuration?: number;
 };
 

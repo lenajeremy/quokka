@@ -51,6 +51,30 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
 
             const {cacheManager, getState} = useQuokkaContext()
             let err: any = null
+            let timeout = React.useRef<number>()
+
+            React.useEffect(() => {
+                const focusHandler = () => trigger(args, false)
+
+                if (options?.refetchOnFocus) {
+                    window.addEventListener('focus', focusHandler);
+                }
+
+                if (options?.pollingInterval && options?.pollingInterval > 0) {
+                    console.log('set timeout', timeout.current, options?.pollingInterval);
+                    const i = setInterval(focusHandler, options.pollingInterval)
+                    timeout.current = i
+                }
+
+                return () => {
+                    window.removeEventListener('focus', focusHandler)
+                    console.log('removinig event listener')
+                    if (timeout.current) {
+                    console.log('renoving interval')
+                        clearInterval(timeout.current);
+                    }
+                }
+            }, [])
 
             const trigger = React.useCallback(
                 async function (data: Takes, fetchFromCache = false): Promise<Returns | undefined> {

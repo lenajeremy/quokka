@@ -9,6 +9,7 @@ export class CacheEntry<Tags> {
     readonly params: QuokkaApiQueryParams<Tags>;
     readonly payload: any;
     readonly tags: TagType<Tags>;
+    isValid: boolean;
 
     constructor(id: string, name: string, params: QuokkaApiQueryParams<Tags>, payload: any, result: any, tags: TagType<Tags>) {
         this.id = id;
@@ -17,6 +18,7 @@ export class CacheEntry<Tags> {
         this.payload = payload;
         this.tags = tags;
         this.params = params;
+        this.isValid = true;
     }
 }
 
@@ -38,10 +40,9 @@ export class CacheManager {
         const entry = this._apis[apiName].find(entry => (
             entry.name === nameOfHook &&
             entry.id === key &&
-            hasMatchingTags(tags, entry.tags)
+            hasMatchingTags(tags, entry.tags) &&
+            entry.isValid
         ))
-
-        console.log(entry)
 
         if (!entry) return
         return entry.result as Returns;

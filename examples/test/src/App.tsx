@@ -13,7 +13,9 @@ function App() {
     const {data: todos, loading, initLoading, trigger} = useGetTodosQuery(search, {
         fetchOnArgsChange: true,
         fetchOnRender: true,
-        debouncedDuration: 500
+        debouncedDuration: 500,
+        refetchOnFocus: true,
+        pollingInterval: 30000,
     })
     const {trigger: createTodo} = useCreateTodoMutation()
     const [todoTitle, setTodoTitle] = React.useState("")
@@ -31,7 +33,7 @@ function App() {
                     }
                 </div>
             )}
-            <button onClick={() => trigger()}>Get New Todos</button>
+            <button onClick={() => trigger("")}>Get New Todos</button>
             <button onClick={() => {
                 console.log(cacheManager)
             }}>Get Cache Manager

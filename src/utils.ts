@@ -174,7 +174,6 @@ async function generateSHA256Hash(message: string): Promise<string> {
 }
 
 export function hasMatchingTags<T>(mTags?: TagType<T>, qTags?: TagType<T>): boolean {
-    console.log(mTags, qTags)
     if (!mTags || !qTags) return false
 
     if (!(mTags || qTags) || (mTags.length == 0 && qTags.length == 0)) return true;
