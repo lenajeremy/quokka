@@ -1,8 +1,5 @@
 import type {AnyFunction, TagType} from "./types";
-import type {QuokkaApiMutationParams, QuokkaApiQueryParams,} from "./types/quokka";
-import type {CreateApiOptions} from "./types/quokka";
-import {QuokkaApiMutation} from "./models/api-mutation";
-import {QuokkaApiQuery} from "./models/api-query";
+import type {CreateApiOptions, QuokkaApiMutationParams, QuokkaApiQueryParams,} from "./types/quokka";
 
 export function debounce<T extends AnyFunction>(fn: T, ms: number): T {
     let timer: number;
@@ -176,27 +173,26 @@ async function generateSHA256Hash(message: string): Promise<string> {
         .join('');
 }
 
-function hasMatchingTags<T>(m: QuokkaApiMutation<any, any, T>, q: QuokkaApiQuery<any, any, T>): boolean {
-    let res = false
+export function hasMatchingTags<T>(mTags?: TagType<T>, qTags?: TagType<T>): boolean {
+    console.log(mTags, qTags)
+    if (!mTags || !qTags) return false
 
-    if (!m.tags || !q.tags) {
-        return false
-    }
+    if (!(mTags || qTags) || (mTags.length == 0 && qTags.length == 0)) return true;
 
-    for (const mTag of m.tags) {
-        for (const qTag of q.tags) {
-            if type
+    for (const mTag of mTags) {
+        for (const qTag of qTags) {
+            if (deepCompare(mTag instanceof Function ? mTag() : mTag as any, qTag instanceof Function ? qTag() : qTag as any)) {
+                return true
+            }
         }
     }
-
-    return res
+    return false
 }
 
 type ValidObj = number | string | object | null | undefined
-function deepCompare(obj1: ValidObj, obj2: ValidObj) {
-    const primitives = new Set<string>(["number", "string", "undefined"]);
 
-    if (!obj1 || !obj2 || primitives.has(typeof obj2) || primitives.has(typeof obj1)) {
+function deepCompare(obj1: ValidObj, obj2: ValidObj) {
+    if (!obj1 || !obj2 || typeof obj2 !== 'object' || typeof obj1 !== 'object') {
         return obj1 === obj2
     }
 
@@ -221,6 +217,7 @@ function deepCompare(obj1: ValidObj, obj2: ValidObj) {
             return false
         }
         for (const key of Object.keys(obj1)) {
+            // @ts-ignore
             if (!deepCompare(obj1[key], obj2[key])) {
                 return false
             }

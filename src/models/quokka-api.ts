@@ -6,7 +6,7 @@ import {TagType} from "../types";
 
 export class QuokkaApi<T, Tags> {
     private endpoints: T;
-    private readonly apiName: string;
+    readonly apiName: string;
     private readonly prepareHeaders?: (getState: <T>() => T, headers: Headers) => Headers;
     private readonly baseUrl: string;
     readonly tags: TagType<Tags> | undefined;

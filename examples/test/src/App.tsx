@@ -1,17 +1,29 @@
 import React from 'react'
-import {QuokkaProvider} from "../../../src/context.tsx";
-import {Todo, useCreateTodoMutation, useGetTodosQuery, useMarkAsDoneMutation} from "./todoApi.ts";
+import {
+    Todo,
+    useCreateTodoMutation,
+    useDeleteTodoMutation,
+    useGetTodosQuery,
+    useMarkAsDoneMutation
+} from "./todoApi.ts";
+import {QuokkaProvider, useQuokkaContext} from "quokka";
 
 function App() {
-    const {data: todos, loading, trigger} = useGetTodosQuery(undefined, {fetchOnRender: true})
+    const [search, setSearch] = React.useState("")
+    const {data: todos, loading, initLoading, trigger} = useGetTodosQuery(search, {
+        fetchOnArgsChange: true,
+        fetchOnRender: true,
+        debouncedDuration: 500
+    })
     const {trigger: createTodo} = useCreateTodoMutation()
     const [todoTitle, setTodoTitle] = React.useState("")
     const [expDate, setExpDate] = React.useState(new Date())
+    const {cacheManager} = useQuokkaContext()
 
     return (
         <div>
-            <h1>Hello World</h1>
-            {loading && <p>Loading...</p>}
+            {loading && initLoading && <p>Loading...</p>}
+            <input onChange={e => setSearch(e.target.value)} value={search}/>
             {todos && (
                 <div>
                     {
@@ -20,6 +32,10 @@ function App() {
                 </div>
             )}
             <button onClick={() => trigger()}>Get New Todos</button>
+            <button onClick={() => {
+                console.log(cacheManager)
+            }}>Get Cache Manager
+            </button>
             <hr/>
             <h3>Create Task</h3>
             <input value={todoTitle} onChange={e => setTodoTitle(e.currentTarget.value)}/>
@@ -31,12 +47,14 @@ function App() {
 }
 
 function Task(props: Todo) {
-    const {trigger, data, loading} = useMarkAsDoneMutation()
+    const {trigger, loading} = useMarkAsDoneMutation()
+    const {trigger: deleteTodo} = useDeleteTodoMutation()
+
     return (
-        <div>
+        <div style={{display: 'flex'}}>
             <input type={"checkbox"} checked={props.isDone} onChange={() => trigger({id: props.id})}/>
             <p>{props.title} <small>{loading && "making change.."}</small></p>
-            <pre>{JSON.stringify(data, null, 3)}</pre>
+            <button style={{background: 'tomato'}} onClick={() => deleteTodo({id: props.id})}>Delete</button>
         </div>
     )
 }

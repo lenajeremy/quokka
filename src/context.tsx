@@ -18,20 +18,3 @@ export function QuokkaProvider<RootState>({children, getState}: {
         </GeneralQuokkaContext.Provider>
     );
 }
-
-function getContextHelper(callback: (v: CacheManager | undefined) => void) {
-    return (
-        <GeneralQuokkaContext.Consumer>
-            {(value) => {
-                callback(value.cacheManager);
-                return null;
-            }}
-        </GeneralQuokkaContext.Consumer>
-    );
-}
-
-export function getCacheManager(): CacheManager | undefined {
-    let manager: CacheManager | undefined = undefined;
-    getContextHelper(m => manager = m)
-    return manager;
-}

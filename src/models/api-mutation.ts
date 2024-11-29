@@ -1,11 +1,11 @@
 import React from "react";
 import {QuokkaApiAction} from "./api-action";
-import {MutationHook, QuokkaApiMutationParams} from "../types/quokka";
+import {CreateApiOptions, MutationHook, QuokkaApiMutationParams} from "../types/quokka";
 import {MutationHookType, TagType} from "../types";
-import {debounce, resolveRequestParameters} from "../utils";
-import {CreateApiOptions} from "../types/quokka";
-import {getCacheManager, useQuokkaContext} from "../context";
+import {debounce, hasMatchingTags, resolveRequestParameters} from "../utils";
+import {useQuokkaContext} from "../context";
 import {QuokkaApi} from "./quokka-api";
+import {CacheManager} from "../cache";
 
 export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiAction<
     (a: Takes) => QuokkaApiMutationParams<TagString>,
@@ -14,8 +14,11 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
 > {
     tags?: TagType<TagString>
 
-    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams<TagString>, api: QuokkaApi<any, any>) {
+    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams<TagString>, api: QuokkaApi<any, any>, options?: {
+        invalidatesTags?: TagType<TagString>
+    }) {
         super(generateParams, api);
+        this.tags = options?.invalidatesTags;
     }
 
     protected generateHookName(): MutationHookType {
@@ -30,20 +33,14 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
         params: (a: Takes) => QuokkaApiMutationParams<TagString>,
         apiInit: Omit<CreateApiOptions<any, TagString>, "endpoints">,
     ) {
-        // const queryThis = this
+        const mutationThis = this
         const useMutation: MutationHook<Takes, Returns, Error> = (
             options,
         ) => {
             const [data, setData] = React.useState<Returns | undefined>();
             const [error, setError] = React.useState<Error | undefined>();
             const [loading, setLoading] = React.useState(false);
-            const { getState, cacheManager } = useQuokkaContext()
-
-            console.log(cacheManager)
-
-            // TODO: when a mutation is done, find the queries which depends on it and update those (or run them again)
-            // const c = useQuokkaContext()
-            // c.update()
+            const {getState, cacheManager} = useQuokkaContext()
 
             const trigger = React.useCallback(
                 async function (data: Takes): Promise<Returns | undefined> {
@@ -71,6 +68,9 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                         const json = await res.json();
 
                         if (res.ok) {
+                            if (cacheManager) {
+                                mutationThis.invalidateCache(cacheManager)
+                            }
                             setData(json);
                             return json;
                         } else {
@@ -101,14 +101,20 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
         return useMutation;
     }
 
-    protected invalidateCache() {
-        const cacheManager = getCacheManager()
-        const queries = this.api.queries
+    protected invalidateCache(cacheManager: CacheManager) {
+        if (!this.tags) return
+        const r = /^use(\w+)Query$/
 
-        for (let query of Object.values(queries)) {
-
+        for (let cacheEntry of Object.values(cacheManager.apis[this.api.apiName])) {
+            if (hasMatchingTags(this.tags, cacheEntry.tags)) {
+                const match = cacheEntry.name.match(r)
+                if (match) {
+                    const key = match[1].charAt(0).toLowerCase() + match[1].substring(1)
+                    console.log(key, 'calling trigger for', cacheEntry)
+                    this.api.queries[key].trigger!(cacheEntry.payload)
+                }
+            }
         }
     }
 }
 
-function matchTag
