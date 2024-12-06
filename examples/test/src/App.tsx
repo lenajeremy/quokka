@@ -7,6 +7,7 @@ import {
     useMarkAsDoneMutation
 } from "./todoApi.ts";
 import {QuokkaProvider, useQuokkaContext} from "quokka";
+import quokkaImage from '/quokka.svg'
 
 function App() {
     const [search, setSearch] = React.useState("")
@@ -24,6 +25,7 @@ function App() {
 
     return (
         <div>
+            <img src = {quokkaImage} alt = 'alt' />
             {loading && initLoading && <p>Loading...</p>}
             <input onChange={e => setSearch(e.target.value)} value={search}/>
             {todos && (

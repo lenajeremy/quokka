@@ -14,6 +14,6 @@ export type UseFetchReturn<CallArgs, ReturnArgs, TError = unknown> = {
   trigger: (args: CallArgs) => Promise<ReturnArgs | undefined>;
   error: TError | undefined;
   loading: boolean;
-  initLoading: boolean;
+  initLoading?: boolean;
 };
 
