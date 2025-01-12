@@ -1,6 +1,6 @@
 {
   "name": "quokkajs",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Library for making HTTP requests in React apps.",
   "main": "src/index.ts",
   "repository": "https://github.com/lenajeremy/quokka",
