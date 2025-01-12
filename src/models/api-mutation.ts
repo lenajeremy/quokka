@@ -65,6 +65,7 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                                 ? requestParams.body
                                 : JSON.stringify(requestParams.body),
                         });
+                        console.log('await response')
                         const json = await res.json();
 
                         if (res.ok) {
@@ -90,12 +91,7 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                 [],
             );
 
-            const debouncedTrigger = React.useMemo(
-                () => debounce(trigger, options?.debouncedDuration || 0),
-                [trigger, options?.debouncedDuration],
-            );
-
-            return {data, trigger: debouncedTrigger, error, loading};
+            return {data, trigger, error, loading};
         };
 
         return useMutation;

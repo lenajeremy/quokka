@@ -1,4 +1,4 @@
-import {createApi} from 'quokka'
+import {createApi} from 'quokkajs'
 
 export type Todo = {
     id: number
