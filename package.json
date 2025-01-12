@@ -19,6 +19,7 @@
     "react-dom": "^18.3.1"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepublish": "yarn build && git commit --no-commit"
   }
 }
