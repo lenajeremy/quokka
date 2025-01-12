@@ -1,8 +1,10 @@
 import React from "react";
+import { CacheManager } from "./cache";
 export declare function useQuokkaContext(): {
-    update: (apiName: string, hookName: string, id: string, value: unknown) => void;
-    get<T>(apiName: string, hookName: string, id: string): T | undefined;
+    cacheManager?: CacheManager;
+    getState?: () => any;
 };
-export declare function QuokkaContextProvider({ children }: {
+export declare function QuokkaProvider<RootState>({ children, getState }: {
     children: React.ReactNode;
+    getState: () => RootState;
 }): import("react/jsx-runtime").JSX.Element;

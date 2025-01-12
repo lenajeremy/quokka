@@ -1,9 +1,14 @@
 import { QuokkaApiAction } from "./api-action";
-import { MutationHook, QuokkaApiMutationParams } from "../types/quokka";
-import { MutationHookType } from "../types";
-import { CreateApiOptions } from "../types/quokka";
-export declare class QuokkaApiMutation<Takes, Returns> extends QuokkaApiAction<(a: Takes) => QuokkaApiMutationParams, MutationHookType, MutationHook<Takes, Returns, Error>> {
-    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams);
+import { CreateApiOptions, MutationHook, QuokkaApiMutationParams } from "../types/quokka";
+import { MutationHookType, TagType } from "../types";
+import { QuokkaApi } from "./quokka-api";
+import { CacheManager } from "../cache";
+export declare class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiAction<(a: Takes) => QuokkaApiMutationParams<TagString>, MutationHookType, MutationHook<Takes, Returns, Error>> {
+    tags?: TagType<TagString>;
+    constructor(generateParams: (a: Takes) => QuokkaApiMutationParams<TagString>, api: QuokkaApi<any, any>, options?: {
+        invalidatesTags?: TagType<TagString>;
+    });
     protected generateHookName(): MutationHookType;
-    protected generateHook(params: (a: Takes) => QuokkaApiMutationParams, apiInit: Omit<CreateApiOptions<any>, "endpoints">): MutationHook<Takes, Returns, Error>;
+    protected generateHook(params: (a: Takes) => QuokkaApiMutationParams<TagString>, apiInit: Omit<CreateApiOptions<any, TagString>, "endpoints">): MutationHook<Takes, Returns, Error>;
+    protected invalidateCache(cacheManager: CacheManager): void;
 }

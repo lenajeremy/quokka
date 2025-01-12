@@ -1,7 +1,7 @@
 {
-  "name": "quokka",
-  "version": "1.0.0",
-  "description": "javascript library for making http requests",
+  "name": "quokkajs",
+  "version": "1.0.1",
+  "description": "Library for making HTTP requests in React apps.",
   "main": "main.ts",
   "repository": "https://github.com/lenajeremy/quokka",
   "author": "Jeremiah Lena",
