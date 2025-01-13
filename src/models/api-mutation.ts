@@ -1,11 +1,11 @@
 import React from "react";
-import {QuokkaApiAction} from "./api-action";
-import {CreateApiOptions, MutationHook, QuokkaApiMutationParams} from "../types/quokka";
-import {MutationHookType, TagType} from "../types";
-import {debounce, hasMatchingTags, resolveRequestParameters} from "../utils";
-import {useQuokkaContext} from "../context";
-import {QuokkaApi} from "./quokka-api";
-import {CacheManager} from "../cache";
+import { QuokkaApiAction } from "./api-action";
+import { CreateApiOptions, MutationHook, QuokkaApiMutationParams } from "../types/quokka";
+import { MutationHookType, TagType } from "../types";
+import { debounce, hasMatchingTags, resolveRequestParameters } from "../utils";
+import { useQuokkaContext } from "../context";
+import { QuokkaApi } from "./quokka-api";
+import { CacheManager } from "../cache";
 
 export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiAction<
     (a: Takes) => QuokkaApiMutationParams<TagString>,
@@ -23,7 +23,7 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
 
     protected generateHookName(): MutationHookType {
         const capitalized = this.requestName.charAt(0).toUpperCase() +
-        this.requestName.slice(1) as Capitalize<string>;
+            this.requestName.slice(1) as Capitalize<string>;
         const hook = `use${capitalized}Mutation` as MutationHookType;
         this.nameOfHook = hook;
         return hook;
@@ -40,7 +40,7 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
             const [data, setData] = React.useState<Returns | undefined>();
             const [error, setError] = React.useState<Error | undefined>();
             const [loading, setLoading] = React.useState(false);
-            const {getState, cacheManager} = useQuokkaContext()
+            const { getState, cacheManager } = useQuokkaContext()
 
             const trigger = React.useCallback(
                 async function (data: Takes): Promise<Returns | undefined> {
@@ -65,7 +65,6 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                                 ? requestParams.body
                                 : JSON.stringify(requestParams.body),
                         });
-                        console.log('await response')
                         const json = await res.json();
 
                         if (res.ok) {
@@ -81,18 +80,17 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                         setError(err as Error);
                         throw err;
                     } finally {
+                        if (err) {
+                            setError(err as Error);
+                            throw err
+                        }
                         setLoading(false);
-                    }
-
-                    if (err) {
-                        setError(err as Error);
-                        throw err
                     }
                 },
                 [],
             );
 
-            return {data, trigger, error, loading};
+            return { data, trigger, error, loading };
         };
 
         return useMutation;
