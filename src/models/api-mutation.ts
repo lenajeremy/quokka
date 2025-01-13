@@ -85,6 +85,7 @@ export class QuokkaApiMutation<Takes, Returns, TagString> extends QuokkaApiActio
                     }
 
                     if (err) {
+                        setError(err as Error);
                         throw err
                     }
                 },
