@@ -116,11 +116,11 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
                             setError(err as Error);
                             throw err;
                         } finally {
+                            setLoading(false);
                             if (err) {
                                 setError(err)
                                 throw err;
                             }
-                            setLoading(false);
                         }
                     }
                 },
