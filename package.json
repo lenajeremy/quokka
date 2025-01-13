@@ -2,7 +2,7 @@
   "name": "quokkajs",
   "version": "1.0.12",
   "description": "Library for making HTTP requests in React apps.",
-  "main": "src/main.ts",
+  "main": "lib/index.js",
   "repository": "https://github.com/lenajeremy/quokka",
   "author": "Jeremiah Lena",
   "license": "MIT",
