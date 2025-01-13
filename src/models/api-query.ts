@@ -120,6 +120,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
                         }
 
                         if (err) {
+                            setError(err)
                             throw err;
                         }
                     }

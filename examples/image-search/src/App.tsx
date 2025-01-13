@@ -161,7 +161,7 @@
 //     );
 // }
 
-import { createApi } from "quokka";
+import { createApi } from "quokkajs";
 import { useState } from "react";
 
 const authApi = createApi({
@@ -188,6 +188,7 @@ export default function Main() {
       const res = await trigger({ email });
       console.log(res);
     } catch (err) {
+      alert(JSON.stringify(err))
       console.error("catching error", err);
     }
   };
