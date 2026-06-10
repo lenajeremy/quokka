@@ -2,22 +2,22 @@ import { TagType } from "./types";
 import { hasMatchingTags } from "./utils";
 import { QuokkaApiQueryParams } from "./types/quokka";
 
-export class CacheEntry<Tags> {
+export class CacheEntry<Tags, Result = any> {
   readonly id: string;
   readonly name: string;
-  result: any;
-  readonly params: QuokkaApiQueryParams<Tags>;
+  result: Result;
+  readonly params: QuokkaApiQueryParams<Tags, Result>;
   readonly payload: any;
-  readonly tags: TagType<Tags>;
+  readonly tags: TagType<Tags, Result>;
   isValid: boolean;
 
   constructor(
     id: string,
     name: string,
-    params: QuokkaApiQueryParams<Tags>,
+    params: QuokkaApiQueryParams<Tags, Result>,
     payload: any,
     result: any,
-    tags: TagType<Tags>,
+    tags: TagType<Tags, Result>,
   ) {
     this.id = id;
     this.name = name;
@@ -46,7 +46,7 @@ export class CacheManager {
     apiName: string,
     nameOfHook: string,
     key: string,
-    tags?: TagType<Tag>,
+    tags?: TagType<Tag, Returns>,
   ): Returns | undefined {
     if (!this._apis[apiName]) return;
     const entry = this._apis[apiName].find(
@@ -61,13 +61,13 @@ export class CacheManager {
     return entry.result as Returns;
   }
 
-  update<Tag>(
+  update<Tag, Data = any>(
     apiName: string,
     nameOfHook: string,
     key: string,
-    tags: TagType<Tag>,
-    data: any,
-    params: QuokkaApiQueryParams<Tag>,
+    tags: TagType<Tag, Data>,
+    data: Data,
+    params: QuokkaApiQueryParams<Tag, Data>,
     payload: any,
   ) {
     if (!this._apis[apiName]) {

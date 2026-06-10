@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       quokkajs:
-        specifier: ^1.0.15
-        version: 1.0.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: file:../..
+        version: file:../..(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -575,8 +575,8 @@ packages:
     resolution: {integrity: sha512-FfR8sjd4em2T6fb3I2MwAJU7HWVMr9zba+enmQeeWFfCbm+UOC/0X4DS8XtpUTMwWMGbjKYP7xjfNekzyGmB3A==}
     engines: {node: ^10 || ^12 || >=14}
 
-  quokkajs@1.0.15:
-    resolution: {integrity: sha512-PK5A7XZ1gh2aqIgCFEPAyNX9mRST6RG88CSnXGg7pvaj/1AoPbK4Q9enCw3cl2aFu0U4bgYsl9hOZ05hxx64LQ==}
+  quokkajs@file:../..:
+    resolution: {directory: ../.., type: directory}
     peerDependencies:
       react: ^18.3.1
       react-dom: ^18.3.1
@@ -1127,7 +1127,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  quokkajs@1.0.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  quokkajs@file:../..(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)

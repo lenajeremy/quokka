@@ -5,7 +5,7 @@ import { QuokkaApi } from "./quokka-api";
  * `QuokkaApiAction` is the abstract class from which `QuokkaApiQuery` and `QuokkaApiMutation` classes inherit.
  * It describes the fields and methods that an API action should have. API are one of two things: Queries or Mutations.
  * */
-export declare abstract class QuokkaApiAction<ParameterGenerator extends (args: any) => QuokkaApiQueryParams<any> | QuokkaApiMutationParams<any>, HookNameType extends QueryHookType | MutationHookType, HookType> {
+export declare abstract class QuokkaApiAction<ParameterGenerator extends (args: any) => QuokkaApiQueryParams<any, any> | QuokkaApiMutationParams<any, any>, HookNameType extends QueryHookType | MutationHookType, HookType> {
     /**
      * `generateParams` takes an argument and returns the parameters which are going to
      *  be used to make the api request.

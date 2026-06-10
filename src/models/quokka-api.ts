@@ -12,7 +12,7 @@ export class QuokkaApi<T, Tags> {
     headers: Headers,
   ) => Headers;
   private readonly baseUrl: string;
-  readonly tags: TagType<Tags> | undefined;
+  readonly tags: Array<Tags> | undefined;
   public queries: Record<string, QuokkaApiQuery<any, any, any>>;
   public mutations: Record<string, QuokkaApiMutation<any, any, any>>;
 

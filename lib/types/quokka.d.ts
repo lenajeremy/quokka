@@ -3,20 +3,20 @@ import { QuokkaApiQuery } from "../models/api-query";
 import { UseFetchReturn } from "./fetch";
 import { QuokkaRequestBuilder } from "../models/request-builder";
 import { TagType } from "./index";
-export type QuokkaApiQueryParams<TagString> = {
+export type QuokkaApiQueryParams<TagString, Returns> = {
     url: string;
     params?: Record<string, any>;
     method?: "GET";
     headers?: Headers;
-    providesTags?: TagType<TagString>;
+    providesTags?: TagType<TagString, Returns>;
 };
-export type QuokkaApiMutationParams<TagString> = {
+export type QuokkaApiMutationParams<TagString, Returns> = {
     url: string;
     params?: Record<string, any>;
     method: "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
     body?: BodyInit | Record<string, any>;
     headers?: Headers;
-    invalidatesTags?: TagType<TagString>;
+    invalidatesTags?: TagType<TagString, Returns>;
 };
 export type QueryHookOptions = {
     fetchOnRender?: boolean;
@@ -42,6 +42,6 @@ export type CreateApiOptions<Endpoints, Tags, RootState = any> = {
     baseUrl: string;
     prepareHeaders?: (getState: <T = RootState>() => T, headers: Headers) => Headers;
     endpoints: (builder: QuokkaRequestBuilder<Tags>) => Endpoints;
-    tags?: TagType<Tags>;
+    tags?: Array<Tags>;
 };
 export {};

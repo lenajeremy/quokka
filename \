@@ -188,20 +188,19 @@ async function generateSHA256Hash(message: string): Promise<string> {
     .join("");
 }
 
-export function hasMatchingTags<T extends string, R>(
+export function hasMatchingTags<T, R>(
   mTags?: TagType<T, R>,
   qTags?: TagType<T, R>,
-  res?: R,
 ): boolean {
   if (!mTags || !qTags) return false;
 
-  const mutationTagsValue = isArrayTag(mTags) ? mTags : mTags(res);
-  const queryTagsValue = isArrayTag(qTags) ? qTags : qTags(res);
+  const mutationTagsValue = isArrayTag(mTags) ? mTags : mTags();
+  const queryTagsValue = isArrayTag(qTags) ? qTags : qTags();
 
   if (mutationTagsValue.length == 0 && queryTagsValue.length == 0) return true;
 
-  for (const mTag of mutationTagsValue) {
-    for (const qTag of queryTagsValue) {
+  for (const mTag of mTagsValue) {
+    for (const qTag of qTagsValue) {
       if (deepCompare(mTag, qTag)) {
         return true;
       }

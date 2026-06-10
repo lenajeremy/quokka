@@ -14,21 +14,6 @@ export type LoginResponse = {
   user: User;
 };
 
-// Unauthenticated API — login only
-export const unauthApi = createApi({
-  apiName: "unauthApi",
-  baseUrl: "http://localhost:3001",
-  endpoints: (builder) => ({
-    login: builder.mutation<{ email: string; password: string }, LoginResponse>(
-      (body) => ({
-        url: "/auth/login",
-        method: "POST",
-        body,
-      }),
-    ),
-  }),
-});
-
 // Authenticated API — reads token from Zustand via getState
 export const authApi = createApi({
   apiName: "authApi",
@@ -48,8 +33,15 @@ export const authApi = createApi({
       url: "/auth/logout",
       method: "POST",
     })),
+    login: builder.mutation<{ email: string; password: string }, LoginResponse>(
+      (body) => ({
+        url: "/auth/login",
+        method: "POST",
+        body,
+      }),
+    ),
   }),
 });
 
-export const { useLoginMutation } = unauthApi.actions;
-export const { useGetMeQuery, useLogoutMutation } = authApi.actions;
+export const { useGetMeQuery, useLogoutMutation, useLoginMutation } =
+  authApi.actions;

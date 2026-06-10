@@ -15,18 +15,18 @@ import {
 import { QuokkaApi } from "./quokka-api";
 
 export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
-  (a: Takes) => QuokkaApiQueryParams<TagsString>,
+  (a: Takes) => QuokkaApiQueryParams<TagsString, Returns>,
   QueryHookType,
   QueryHook<Takes, Returns, Error>
 > {
-  tags?: TagType<TagsString>;
+  tags?: TagType<TagsString, Returns>;
   trigger?: (takes: Takes) => void;
 
   constructor(
-    generateParams: (a: Takes) => QuokkaApiQueryParams<TagsString>,
+    generateParams: (a: Takes) => QuokkaApiQueryParams<TagsString, Returns>,
     api: QuokkaApi<any, any>,
     options?: {
-      providesTags?: TagType<TagsString>;
+      providesTags?: TagType<TagsString, Returns>;
     },
   ) {
     super(generateParams, api);
@@ -42,7 +42,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
   }
 
   protected generateHook(
-    params: (a: Takes) => QuokkaApiQueryParams<TagsString>,
+    params: (a: Takes) => QuokkaApiQueryParams<TagsString, Returns>,
     apiInit: Omit<CreateApiOptions<any, TagsString>, "endpoints">,
   ) {
     const queryThis = this;
@@ -78,7 +78,6 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
           window.removeEventListener("focus", focusHandler);
 
           if (timeout.current) {
-            console.log("renoving interval");
             clearInterval(timeout.current);
           }
         };
