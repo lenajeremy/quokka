@@ -20,6 +20,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "prepublish": "yarn build"
+    "prepublish": "pnpm build"
   }
 }
