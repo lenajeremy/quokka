@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "password": "password123",
+    "role": "admin",
+    "username": "alicej",
+    "avatar": "AJ"
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "password": "securepass",
+    "role": "user",
+    "username": "bobsmith",
+    "avatar": "BS"
+  },
+  {
+    "id": 3,
+    "name": "Carol White",
+    "email": "carol@example.com",
+    "password": "carol2024",
+    "role": "user",
+    "username": "carolw",
+    "avatar": "CW"
+  }
+]

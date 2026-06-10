@@ -7,4 +7,4 @@ export declare function useQuokkaContext(): {
 export declare function QuokkaProvider<RootState>({ children, getState }: {
     children: React.ReactNode;
     getState: () => RootState;
-}): import("react/jsx-runtime").JSX.Element;
+}): React.JSX.Element;

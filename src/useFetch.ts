@@ -2,7 +2,7 @@ import React from "react";
 import {debounce} from "./utils.js";
 import type {UseFetchReturn} from "./types/fetch.js";
 
-export default function useFetch<
+export function useFetch<
     TArgs = void,
     TReturns = void,
     TError = void,

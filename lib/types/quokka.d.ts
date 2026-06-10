@@ -37,10 +37,10 @@ type HookFunction<T, Tags> = T extends QuokkaApiQuery<infer Takes, infer Returns
 export type MakeHook<T, Tags> = {
     [K in keyof T as `use${Capitalize<string & K>}${HookSuffix<T[K], Tags>}`]: HookFunction<T[K], Tags>;
 };
-export type CreateApiOptions<Endpoints, Tags> = {
+export type CreateApiOptions<Endpoints, Tags, RootState = any> = {
     apiName: string;
     baseUrl: string;
-    prepareHeaders?: (getState: () => any, headers: Headers) => Headers;
+    prepareHeaders?: (getState: <T = RootState>() => T, headers: Headers) => Headers;
     endpoints: (builder: QuokkaRequestBuilder<Tags>) => Endpoints;
     tags?: TagType<Tags>;
 };

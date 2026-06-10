@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "title": "Getting started with quokkajs",
+    "body": "quokkajs provides an RTK Query-style API for React without requiring Redux. Define your endpoints once and get fully typed hooks back automatically."
+  },
+  {
+    "id": 2,
+    "userId": 1,
+    "title": "How tag-based cache invalidation works",
+    "body": "When a mutation succeeds, quokkajs finds all cached query entries whose providesTags overlap with the mutation's invalidatesTags and re-triggers them automatically."
+  },
+  {
+    "id": 3,
+    "userId": 2,
+    "title": "SHA-256 request deduplication in the cache",
+    "body": "Every cached response is keyed by a SHA-256 hash of the fully-resolved request parameters with keys recursively sorted, ensuring parameter-order independence."
+  },
+  {
+    "id": 4,
+    "userId": 2,
+    "title": "Using prepareHeaders with Zustand",
+    "body": "Pass your store's getState to QuokkaProvider and read the auth token inside prepareHeaders. The token is injected into every request made by that API."
+  },
+  {
+    "id": 5,
+    "userId": 3,
+    "title": "Debounced search with fetchOnArgsChange",
+    "body": "Combine fetchOnArgsChange with debouncedDuration to build search-as-you-type UIs that only fire a network request after the user stops typing."
+  },
+  {
+    "id": 6,
+    "userId": 3,
+    "title": "Polling and focus refetch patterns",
+    "body": "Set pollingInterval to keep data fresh on a timer, and refetchOnFocus to immediately re-fetch when the user returns to the browser tab."
+  },
+  {
+    "id": 7,
+    "userId": 1,
+    "title": "The useFetch hook for one-off requests",
+    "body": "useFetch is a lower-level hook that works without createApi and QuokkaProvider. Use it for standalone requests that don't belong to a named API slice."
+  },
+  {
+    "id": 8,
+    "userId": 2,
+    "title": "TypeScript inference with MakeHook",
+    "body": "The MakeHook mapped type derives use${Capitalize<K>}${Query|Mutation} signatures at compile time, giving full type inference with zero manual annotation."
+  }
+]

@@ -1,69 +1,92 @@
-import {TagType} from "./types";
-import {hasMatchingTags} from "./utils";
-import {QuokkaApiQueryParams} from "./types/quokka";
+import { TagType } from "./types";
+import { hasMatchingTags } from "./utils";
+import { QuokkaApiQueryParams } from "./types/quokka";
 
 export class CacheEntry<Tags> {
-    readonly id: string;
-    readonly name: string;
-    result: any;
-    readonly params: QuokkaApiQueryParams<Tags>;
-    readonly payload: any;
-    readonly tags: TagType<Tags>;
-    isValid: boolean;
+  readonly id: string;
+  readonly name: string;
+  result: any;
+  readonly params: QuokkaApiQueryParams<Tags>;
+  readonly payload: any;
+  readonly tags: TagType<Tags>;
+  isValid: boolean;
 
-    constructor(id: string, name: string, params: QuokkaApiQueryParams<Tags>, payload: any, result: any, tags: TagType<Tags>) {
-        this.id = id;
-        this.name = name;
-        this.result = result;
-        this.payload = payload;
-        this.tags = tags;
-        this.params = params;
-        this.isValid = true;
-    }
+  constructor(
+    id: string,
+    name: string,
+    params: QuokkaApiQueryParams<Tags>,
+    payload: any,
+    result: any,
+    tags: TagType<Tags>,
+  ) {
+    this.id = id;
+    this.name = name;
+    this.result = result;
+    this.payload = payload;
+    this.tags = tags;
+    this.params = params;
+    this.isValid = true;
+  }
 }
 
-type ApiEntries<T> = Record<string, Array<CacheEntry<T>>>
+type ApiEntries<T> = Record<string, Array<CacheEntry<T>>>;
 
 export class CacheManager {
-    private _apis: ApiEntries<any>
+  private _apis: ApiEntries<any>;
 
-    constructor() {
-        this._apis = {};
+  constructor() {
+    this._apis = {};
+  }
+
+  get apis() {
+    return this._apis;
+  }
+
+  get<Returns, Tag>(
+    apiName: string,
+    nameOfHook: string,
+    key: string,
+    tags?: TagType<Tag>,
+  ): Returns | undefined {
+    if (!this._apis[apiName]) return;
+    const entry = this._apis[apiName].find(
+      (entry) =>
+        entry.name === nameOfHook &&
+        entry.id === key &&
+        hasMatchingTags(tags, entry.tags) &&
+        entry.isValid,
+    );
+
+    if (!entry) return;
+    return entry.result as Returns;
+  }
+
+  update<Tag>(
+    apiName: string,
+    nameOfHook: string,
+    key: string,
+    tags: TagType<Tag>,
+    data: any,
+    params: QuokkaApiQueryParams<Tag>,
+    payload: any,
+  ) {
+    if (!this._apis[apiName]) {
+      this._apis[apiName] = [];
     }
 
-    get apis() {
-        return this._apis;
+    let entryIndex = this._apis[apiName].findIndex(
+      (entry) =>
+        entry.name === nameOfHook &&
+        entry.id === key &&
+        hasMatchingTags(tags, entry.tags),
+    );
+
+    if (entryIndex === -1) {
+      let entry = new CacheEntry(key, nameOfHook, params, payload, data, tags);
+      this._apis[apiName].push(entry);
+    } else {
+      this._apis[apiName].at(entryIndex)!.result = data;
     }
-
-    get<Returns, Tag>(apiName: string, nameOfHook: string, key: string, tags?: TagType<Tag>): Returns | undefined {
-        if (!this._apis[apiName]) return
-        const entry = this._apis[apiName].find(entry => (
-            entry.name === nameOfHook &&
-            entry.id === key &&
-            hasMatchingTags(tags, entry.tags) &&
-            entry.isValid
-        ))
-
-        if (!entry) return
-        return entry.result as Returns;
-    }
-
-    update<Tag>(apiName: string, nameOfHook: string, key: string, tags: TagType<Tag>, data: any, params: QuokkaApiQueryParams<Tag>, payload: any) {
-        if (!this._apis[apiName]) {
-            this._apis[apiName] = []
-        }
-
-        let entryIndex = this._apis[apiName].findIndex(entry => (
-            entry.name === nameOfHook &&
-            entry.id === key &&
-            hasMatchingTags(tags, entry.tags)
-        ))
-
-        if (entryIndex === -1) {
-            let entry = new CacheEntry(key, nameOfHook, params, payload, data, tags)
-            this._apis[apiName].push(entry)
-        } else {
-            this._apis[apiName].at(entryIndex)!.result = data
-        }
-    }
+  }
 }
+
