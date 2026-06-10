@@ -17,7 +17,7 @@ import { QuokkaApi } from "./quokka-api";
 export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
   (a: Takes) => QuokkaApiQueryParams<TagsString, Returns>,
   QueryHookType,
-  QueryHook<Takes, Returns, Error>
+  QueryHook<Takes, Returns, Error, TagsString>
 > {
   tags?: TagType<TagsString, Returns>;
   trigger?: (takes: Takes) => void;
@@ -47,7 +47,10 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
   ) {
     const queryThis = this;
 
-    const useQuery: QueryHook<Takes, Returns, Error> = (args, options) => {
+    const useQuery: QueryHook<Takes, Returns, Error, TagsString> = (
+      args,
+      options,
+    ) => {
       const initRef = React.useRef(params(args));
       const hasRunFetchRef = React.useRef(false);
       const hasArgsChangedRef = React.useRef(false);

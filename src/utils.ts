@@ -246,4 +246,3 @@ function deepCompare(obj1: ValidObj, obj2: ValidObj) {
   }
   return true;
 }
-

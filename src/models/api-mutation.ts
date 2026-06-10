@@ -18,7 +18,7 @@ export class QuokkaApiMutation<
 > extends QuokkaApiAction<
   (a: Takes) => QuokkaApiMutationParams<TagString, Returns>,
   MutationHookType,
-  MutationHook<Takes, Returns, Error>
+  MutationHook<Takes, Returns, Error, TagString>
 > {
   tags?: TagType<TagString, Returns>;
 
@@ -46,7 +46,9 @@ export class QuokkaApiMutation<
     apiInit: Omit<CreateApiOptions<any, TagString>, "endpoints">,
   ) {
     const mutationThis = this;
-    const useMutation: MutationHook<Takes, Returns, Error> = (options) => {
+    const useMutation: MutationHook<Takes, Returns, Error, TagString> = (
+      options,
+    ) => {
       const [data, setData] = React.useState<Returns | undefined>();
       const [error, setError] = React.useState<Error | undefined>();
       const [loading, setLoading] = React.useState(false);
@@ -113,11 +115,11 @@ export class QuokkaApiMutation<
   protected invalidateCache(
     cacheManager: CacheManager,
     res: Returns,
-    invalidates: TagType<TagString, Returns>,
+    invalidates?: TagType<TagString, Returns>,
   ) {
     const r = /^use(\w+)Query$/;
 
-    for (let cacheEntry of Object.values(cacheManager.apis[this.api.apiName])) {
+    for (let cacheEntry of Object.values(cacheManager.apis[this.api.apiName] ?? [])) {
       if (
         hasMatchingTags(this.tags, cacheEntry.tags, res) ||
         hasMatchingTags(invalidates, cacheEntry.tags, res)

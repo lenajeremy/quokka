@@ -8,7 +8,8 @@
     "lib": ["ESNext", "DOM", "ES2015"],
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "baseUrl": "./src"
   },
   "include": ["src"],
   "exclude": ["node_modules", "lib"]
