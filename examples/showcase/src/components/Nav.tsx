@@ -6,6 +6,7 @@ const pages = [
   { path: '/crud-invalidation', label: '3. CRUD + Invalidation', desc: 'providesTags · invalidatesTags' },
   { path: '/polling', label: '4. Polling', desc: 'pollingInterval · refetchOnFocus' },
   { path: '/auth-use-fetch', label: '5. Auth', desc: 'prepareHeaders · getState · login flow' },
+  { path: '/articles', label: '6. Articles', desc: 'per-item tags · nested routes · edit' },
 ]
 
 export default function Nav() {

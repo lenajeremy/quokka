@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "title": "Getting Started with React Query Patterns",
+    "body": "Modern React applications need a reliable way to manage server state. Libraries like RTK Query, TanStack Query, and quokkajs solve this by abstracting away the boilerplate of loading states, caching, and refetching.\n\nThe core idea is simple: describe your endpoints once, and let the library generate typed hooks. Each hook returns { data, loading, error, trigger } so your components stay focused on rendering.\n\nCache invalidation is where these libraries really shine. By tagging queries with providesTags and mutations with invalidatesTags, you can ensure that after a mutation succeeds, any stale queries refetch automatically.",
+    "author": "Alice Johnson",
+    "category": "React",
+    "publishedAt": "2025-11-01"
+  },
+  {
+    "id": 2,
+    "title": "Understanding Cache Invalidation and Validation yippeeeee",
+    "body": "Cache invalidation is one of the two hard problems in computer science — the other being naming things. In the context of data fetching, it means: after a write, which reads need to be considered stale?\n\nTag-based invalidation gives you a declarative answer. You annotate each query with the data it depends on (providesTags), and each mutation with the data it changes (invalidatesTags). The framework does the matching.\n\nThe power comes from fine-grained tags. Instead of invalidating all posts after an update, you can invalidate only { name: 'post', id: 5 }. Only queries that provided that exact tag will refetch.\n\n\nThis is the greatest thing you'd ever see. this is beautiful man",
+    "author": "Bob Martinez",
+    "category": "Architecture and Finance",
+    "publishedAt": "2025-11-08"
+  },
+  {
+    "id": 3,
+    "title": "TypeScript Mapped Types in Practice",
+    "body": "Mapped types are one of TypeScript's most powerful features, and they're underused in most codebases. The pattern `{ [K in keyof T]: ... }` lets you transform object types in ways that would require dozens of manual overloads otherwise.\n\nTemplate literal types take this further. `use${Capitalize<K>}Query` is a valid TypeScript type — it produces a string type by interpolating and transforming another string type at the type level.\n\nquokkajs uses both to give you fully typed, auto-named hooks from a plain endpoint map. No codegen, no decorators, just TypeScript.",
+    "author": "Carol Smith",
+    "category": "TypeScript",
+    "publishedAt": "2025-11-15"
+  },
+  {
+    "id": 4,
+    "title": "Debouncing API Calls the Right Way",
+    "body": "Debouncing is essential for search inputs, but most implementations have subtle bugs. A naive setTimeout approach leaks timers, doesn't handle component unmounts, and doesn't cancel in-flight requests.\n\nThe correct approach wraps the fetch in a debounced function that's stable across renders (created once via useCallback or useRef), clears the previous timer before setting a new one, and cancels via AbortController when the component unmounts or the search term changes.\n\nThe debouncedDuration option in quokkajs handles all of this for you. Pair it with fetchOnArgsChange and your search components write themselves.",
+    "author": "Alice Johnson",
+    "category": "Performance",
+    "publishedAt": "2025-11-22"
+  },
+  {
+    "id": 5,
+    "title": "Polling vs WebSockets: When to Use Each",
+    "body": "Real-time data doesn't always need WebSockets. For dashboards that update every 30 seconds, polling is simpler, easier to debug, and works through every proxy and firewall. WebSockets shine when you need sub-second latency or server-initiated pushes.\n\nPolling with pollingInterval in quokkajs is a one-liner. The interval is cleared on unmount and reset when the tab regains focus (refetchOnFocus), so you don't hammer the server while the user is looking at a different tab.\n\nStart with polling. Upgrade to WebSockets when milliseconds actually matter.",
+    "author": "Bob Martinez",
+    "category": "Architecture",
+    "publishedAt": "2025-11-29"
+  },
+  {
+    "id": 6,
+    "title": "Understanding Cache Invalidation and Validation yippeeeee",
+    "body": "Cache invalidation is one of the two hard problems in computer science — the other being naming things. In the context of data fetching, it means: after a write, which reads need to be considered stale?\n\nTag-based invalidation gives you a declarative answer. You annotate each query with the data it depends on (providesTags), and each mutation with the data it changes (invalidatesTags). The framework does the matching.\n\nThe power comes from fine-grained tags. Instead of invalidating all posts after an update, you can invalidate only { name: 'post', id: 5 }. Only queries that provided that exact tag will refetch.\n\n\nThis is the greatest thing you'd ever see. this is beautiful man",
+    "author": "Carol Smith",
+    "category": "Architecture and Finance",
+    "publishedAt": "2025-12-06"
+  }
+]

@@ -169,6 +169,32 @@ app.delete('/todos/:id', (req, res) => {
   res.status(200).json({ message: 'Deleted' })
 })
 
+// --- Articles ---
+
+// GET /articles
+app.get('/articles', (req, res) => {
+  res.json(read('articles.json'))
+})
+
+// GET /articles/:id
+app.get('/articles/:id', (req, res) => {
+  const articles = read('articles.json')
+  const article = articles.find((a) => a.id === parseInt(req.params.id))
+  if (!article) return res.status(404).json({ error: 'Article not found' })
+  res.json(article)
+})
+
+// PATCH /articles/:id
+app.patch('/articles/:id', (req, res) => {
+  const articles = read('articles.json')
+  const idx = articles.findIndex((a) => a.id === parseInt(req.params.id))
+  if (idx === -1) return res.status(404).json({ error: 'Article not found' })
+
+  articles[idx] = { ...articles[idx], ...req.body }
+  write('articles.json', articles)
+  res.json(articles[idx])
+})
+
 // --- Users ---
 
 // GET /users
@@ -198,4 +224,7 @@ app.listen(PORT, () => {
   console.log(`  PATCH /todos/:id`)
   console.log(`  DELETE /todos/:id`)
   console.log(`  GET  /users`)
+  console.log(`  GET  /articles`)
+  console.log(`  GET  /articles/:id`)
+  console.log(`  PATCH /articles/:id`)
 })
