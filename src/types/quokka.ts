@@ -30,18 +30,17 @@ export type QueryHookOptions = {
   debouncedDuration?: number;
 };
 
-export type MutationHookOptions = {
-  invalidates?: string[] | string;
-  debouncedDuration?: number;
+export type MutationHookOptions<TagString, Returns> = {
+  invalidates?: TagType<TagString, Returns>;
 };
 
-export type QueryHook<Takes, Returns, Error> = (
+export type QueryHook<Takes, Returns, Error, TagString> = (
   args: Takes,
   options?: QueryHookOptions,
 ) => UseFetchReturn<Takes, Returns, Error>;
 
-export type MutationHook<Takes, Returns, Error> = (
-  options?: MutationHookOptions,
+export type MutationHook<Takes, Returns, Error, TagString> = (
+  options?: MutationHookOptions<TagString, Returns>,
 ) => UseFetchReturn<Takes, Returns, Error>;
 
 type HookSuffix<T, Tags> =
@@ -53,9 +52,9 @@ type HookSuffix<T, Tags> =
 
 type HookFunction<T, Tags> =
   T extends QuokkaApiQuery<infer Takes, infer Returns, Tags>
-    ? QueryHook<Takes, Returns, Error>
+    ? QueryHook<Takes, Returns, Error, Tags>
     : T extends QuokkaApiMutation<infer Takes, infer Returns, Tags>
-      ? MutationHook<Takes, Returns, Error>
+      ? MutationHook<Takes, Returns, Error, Tags>
       : never;
 
 export type MakeHook<T, Tags> = {
@@ -75,4 +74,3 @@ export type CreateApiOptions<Endpoints, Tags, RootState = any> = {
   endpoints: (builder: QuokkaRequestBuilder<Tags>) => Endpoints;
   tags?: Array<Tags>;
 };
-

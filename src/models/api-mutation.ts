@@ -6,7 +6,7 @@ import {
   QuokkaApiMutationParams,
 } from "../types/quokka";
 import { MutationHookType, TagType } from "../types";
-import { debounce, hasMatchingTags, resolveRequestParameters } from "../utils";
+import { hasMatchingTags, resolveRequestParameters } from "../utils";
 import { useQuokkaContext } from "../context";
 import { QuokkaApi } from "./quokka-api";
 import { CacheManager } from "../cache";
@@ -81,7 +81,11 @@ export class QuokkaApiMutation<
 
           if (res.ok) {
             if (cacheManager) {
-              mutationThis.invalidateCache(cacheManager, json);
+              mutationThis.invalidateCache(
+                cacheManager,
+                json,
+                options?.invalidates,
+              );
             }
             setData(json);
             return json;
@@ -106,12 +110,18 @@ export class QuokkaApiMutation<
     return useMutation;
   }
 
-  protected invalidateCache(cacheManager: CacheManager, res: Returns) {
-    if (!this.tags) return;
+  protected invalidateCache(
+    cacheManager: CacheManager,
+    res: Returns,
+    invalidates: TagType<TagString, Returns>,
+  ) {
     const r = /^use(\w+)Query$/;
 
     for (let cacheEntry of Object.values(cacheManager.apis[this.api.apiName])) {
-      if (hasMatchingTags(this.tags, cacheEntry.tags, res)) {
+      if (
+        hasMatchingTags(this.tags, cacheEntry.tags, res) ||
+        hasMatchingTags(invalidates, cacheEntry.tags, res)
+      ) {
         const match = cacheEntry.name.match(r);
         if (match) {
           const key = match[1].charAt(0).toLowerCase() + match[1].substring(1);
