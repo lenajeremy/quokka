@@ -4,6 +4,7 @@ import {
   resolveRequestParameters,
   generateRequestKey,
   hasMatchingTags,
+  deepCompare,
 } from "../src/utils";
 
 // ─── debounce ────────────────────────────────────────────────────────────────
@@ -215,5 +216,82 @@ describe("hasMatchingTags", () => {
       { name: "items" as const, id: res?.id ?? 0 },
     ];
     expect(hasMatchingTags(fn, fn, { id: 7 })).toBe(true);
+  });
+});
+
+// ─── deepCompare ─────────────────────────────────────────────────────────────
+
+describe("deepCompare", () => {
+  // primitives
+  it("returns true for identical primitives", () => {
+    expect(deepCompare(1, 1)).toBe(true);
+    expect(deepCompare("hello", "hello")).toBe(true);
+  });
+
+  it("returns false for different primitives", () => {
+    expect(deepCompare(1, 2)).toBe(false);
+    expect(deepCompare("a", "b")).toBe(false);
+  });
+
+  it("returns false when one side is null/undefined", () => {
+    expect(deepCompare(null, { a: 1 })).toBe(false);
+    expect(deepCompare({ a: 1 }, null)).toBe(false);
+    expect(deepCompare(null, null)).toBe(true);
+  });
+
+  it("returns false when comparing primitive to object", () => {
+    expect(deepCompare(1 as any, { a: 1 } as any)).toBe(false);
+    expect(deepCompare("str" as any, { a: 1 } as any)).toBe(false);
+  });
+
+  // plain objects
+  it("returns true for deeply equal objects", () => {
+    expect(deepCompare({ a: 1, b: 2 }, { a: 1, b: 2 })).toBe(true);
+  });
+
+  it("returns false for objects with different values", () => {
+    expect(deepCompare({ a: 1 }, { a: 2 })).toBe(false);
+  });
+
+  it("returns false for objects with different keys", () => {
+    expect(deepCompare({ a: 1 }, { b: 1 })).toBe(false);
+  });
+
+  it("returns false when one object has more keys", () => {
+    expect(deepCompare({ a: 1, b: 2 }, { a: 1 })).toBe(false);
+  });
+
+  it("returns true for nested equal objects", () => {
+    expect(deepCompare({ a: { b: { c: 3 } } }, { a: { b: { c: 3 } } })).toBe(true);
+  });
+
+  it("returns false for nested objects that differ", () => {
+    expect(deepCompare({ a: { b: 1 } }, { a: { b: 2 } })).toBe(false);
+  });
+
+  // arrays
+  it("returns true for identical arrays", () => {
+    expect(deepCompare([1, 2, 3], [1, 2, 3])).toBe(true);
+  });
+
+  it("returns false for arrays with different lengths", () => {
+    expect(deepCompare([1, 2], [1, 2, 3])).toBe(false);
+  });
+
+  it("returns false for arrays with different elements", () => {
+    expect(deepCompare([1, 2, 3], [1, 2, 4])).toBe(false);
+  });
+
+  it("returns false when obj1 is array but obj2 is object", () => {
+    expect(deepCompare([1, 2] as any, { 0: 1, 1: 2 } as any)).toBe(false);
+  });
+
+  it("returns false when obj1 is object but obj2 is array", () => {
+    expect(deepCompare({ 0: 1 } as any, [1] as any)).toBe(false);
+  });
+
+  it("handles arrays of objects", () => {
+    expect(deepCompare([{ id: 1 }], [{ id: 1 }])).toBe(true);
+    expect(deepCompare([{ id: 1 }], [{ id: 2 }])).toBe(false);
   });
 });

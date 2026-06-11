@@ -6,6 +6,8 @@ export default defineConfig({
     globals: true,
     coverage: {
       provider: "v8",
+      enabled: true,
+      reporter: ["text"],
       include: ["src/**"],
       exclude: ["src/builder.ts"],
     },

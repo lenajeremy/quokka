@@ -4,8 +4,11 @@ import React from "react";
 import { createApi } from "../src/main";
 import { QuokkaProvider } from "../src/context";
 
-const wrapper = ({ children }: { children: React.ReactNode }) =>
-  React.createElement(QuokkaProvider, { getState: () => ({}) }, children);
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QuokkaProvider getState={() => { }}>
+    {children}
+  </QuokkaProvider>
+)
 
 // ─── Hook name derivation ─────────────────────────────────────────────────────
 
@@ -137,7 +140,7 @@ describe("useXxxQuery", () => {
     });
 
     const { result } = renderHook(() => api.actions.useGetItemQuery(99), { wrapper });
-    await act(async () => { try { await result.current.trigger(99); } catch {} });
+    await act(async () => { try { await result.current.trigger(99); } catch { } });
 
     expect(result.current.error).toBeDefined();
     expect(result.current.data).toBeUndefined();
@@ -239,7 +242,7 @@ describe("useXxxMutation", () => {
     });
 
     const { result } = renderHook(() => api.actions.useDoThingMutation(), { wrapper });
-    await act(async () => { try { await result.current.trigger(undefined); } catch {} });
+    await act(async () => { try { await result.current.trigger(undefined); } catch { } });
 
     expect(result.current.error).toBeDefined();
     expect(result.current.data).toBeUndefined();
@@ -271,8 +274,11 @@ describe("prepareHeaders", () => {
   });
 
   it("reads from the store via getState", async () => {
-    const authWrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(QuokkaProvider, { getState: () => ({ token: "store-token" }) }, children);
+    const authWrapper = ({ children }: { children: React.ReactNode }) => (
+      <QuokkaProvider getState={() => ({ token: 'store-token' })}>
+        {children}
+      </QuokkaProvider>
+    )
 
     const api = createApi({
       apiName: "headersB",

@@ -114,4 +114,60 @@ describe("CacheManager", () => {
       expect(result).toEqual({ id: 5 });
     });
   });
+
+  describe("delete", () => {
+    it("removes the entry matching the key and returns it", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1, 2], { url: "/items" } as any, undefined);
+      const deleted = cache.delete("myApi", "k1");
+      expect(deleted).toBeDefined();
+      expect(deleted!.id).toBe("k1");
+      expect(cache.apis["myApi"]).toHaveLength(0);
+    });
+
+    it("returns undefined for an unknown api", () => {
+      expect(cache.delete("noSuchApi", "k1")).toBeUndefined();
+    });
+
+    it("returns undefined when the key does not exist", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [], { url: "/items" } as any, undefined);
+      expect(cache.delete("myApi", "no-such-key")).toBeUndefined();
+    });
+
+    it("only removes entries with the matching key, leaving others intact", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1], { url: "/items" } as any, undefined);
+      cache.update("myApi", "useItemsQuery", "k2", ["items"], [2], { url: "/items?p=2" } as any, undefined);
+      cache.delete("myApi", "k1");
+      expect(cache.apis["myApi"]).toHaveLength(1);
+      expect(cache.apis["myApi"][0].id).toBe("k2");
+    });
+
+    it("after deletion get returns undefined for the removed key", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1, 2], { url: "/items" } as any, undefined);
+      cache.delete("myApi", "k1");
+      expect(cache.get("myApi", "useItemsQuery", "k1", ["items"])).toBeUndefined();
+    });
+  });
+
+  describe("clear", () => {
+    it("empties all entries across all apis", () => {
+      cache.update("apiA", "useItemsQuery", "k1", ["items"], [], { url: "/items" } as any, undefined);
+      cache.update("apiB", "usePostsQuery", "k2", ["posts"], [], { url: "/posts" } as any, undefined);
+      cache.clear();
+      expect(cache.apis["apiA"]).toHaveLength(0);
+      expect(cache.apis["apiB"]).toHaveLength(0);
+    });
+
+    it("get returns undefined for all entries after clear", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1, 2], { url: "/items" } as any, undefined);
+      cache.clear();
+      expect(cache.get("myApi", "useItemsQuery", "k1", ["items"])).toBeUndefined();
+    });
+
+    it("update works normally after a clear", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1], { url: "/items" } as any, undefined);
+      cache.clear();
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [99], { url: "/items" } as any, undefined);
+      expect(cache.get("myApi", "useItemsQuery", "k1", ["items"])).toEqual([99]);
+    });
+  });
 });

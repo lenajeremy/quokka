@@ -61,13 +61,13 @@ export class CacheManager {
     return entry.result as Returns;
   }
 
-  update<Tag, Data = any>(
+  update<Returns, Tag>(
     apiName: string,
     nameOfHook: string,
     key: string,
-    tags: TagType<Tag, Data>,
-    data: Data,
-    params: QuokkaApiQueryParams<Tag, Data>,
+    tags: TagType<Tag, Returns>,
+    data: Returns,
+    params: QuokkaApiQueryParams<Tag, Returns>,
     payload: any,
   ) {
     if (!this._apis[apiName]) {
@@ -88,5 +88,31 @@ export class CacheManager {
       this._apis[apiName].at(entryIndex)!.result = data;
     }
   }
-}
 
+  delete<Returns, Tag>(
+    apiName: string,
+    key: string,
+  ): CacheEntry<Tag, Returns> | undefined {
+    if (!this._apis[apiName]) {
+      return;
+    }
+
+    let toDelete: CacheEntry<Tag, Returns> | undefined = undefined;
+
+    this._apis[apiName] = this._apis[apiName].filter((cacheEntry) => {
+      if (cacheEntry.id === key) {
+        toDelete = cacheEntry;
+      }
+
+      return cacheEntry.id !== key;
+    });
+
+    return toDelete;
+  }
+
+  clear() {
+    for (let key of Object.keys(this._apis)) {
+      this._apis[key] = [];
+    }
+  }
+}

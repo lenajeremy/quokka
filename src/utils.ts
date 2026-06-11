@@ -212,7 +212,7 @@ export function hasMatchingTags<T extends string, R>(
 
 type ValidObj = number | string | object | null | undefined;
 
-function deepCompare(obj1: ValidObj, obj2: ValidObj) {
+export function deepCompare(obj1: ValidObj, obj2: ValidObj) {
   if (!obj1 || !obj2 || typeof obj2 !== "object" || typeof obj1 !== "object") {
     return obj1 === obj2;
   }
