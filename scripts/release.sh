@@ -48,7 +48,6 @@ node -e "
 
 # ── 5. Stage changes ──────────────────────────────────────────────────────────
 git add package.json
-git add -f lib/
 
 # ── 6. Commit, tag, push ──────────────────────────────────────────────────────
 git commit -m "v$new_version"
