@@ -27,8 +27,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "prepublish": "bash scripts/release.sh",
     "test": "vitest run",
+    "release": "bash scripts/release.sh",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepare": "husky"

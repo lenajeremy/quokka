@@ -1,6 +1,33 @@
 #!/usr/bin/env bash
 set -e
 
+new_version=""
+current=""
+did_commit=false
+did_tag=false
+
+rollback() {
+  echo ""
+  echo "Something went wrong — rolling back..."
+
+  if $did_tag; then
+    git tag -d "v$new_version" && echo "  Removed tag v$new_version" || true
+  fi
+
+  if $did_commit; then
+    git reset HEAD~1 && echo "  Reverted commit" || true
+  fi
+
+  git stash push -q -- package.json && git stash drop -q \
+    && echo "  Restored package.json to v$current" || true
+
+  echo ""
+  echo "Back to v$current. Nothing was pushed or published."
+  exit 1
+}
+
+trap rollback ERR
+
 # ── 1. Build ──────────────────────────────────────────────────────────────────
 echo "Building package..."
 pnpm build
@@ -46,12 +73,23 @@ node -e "
   fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 "
 
-# ── 5. Stage changes ──────────────────────────────────────────────────────────
+# ── 5. Commit and tag ─────────────────────────────────────────────────────────
 git add package.json
-
-# ── 6. Commit, tag, push ──────────────────────────────────────────────────────
 git commit -m "v$new_version"
+did_commit=true
+
 git tag "v$new_version"
+did_tag=true
+
+# ── 6. Publish ────────────────────────────────────────────────────────────────
+# --ignore-scripts prevents pnpm from re-running prepublish inside this script
+echo ""
+echo "Publishing to npm..."
+pnpm publish --ignore-scripts
+
+# ── 7. Push commit and tag (only reached if publish succeeded) ────────────────
+echo ""
+echo "Pushing to remote..."
 git push
 git push origin "v$new_version"
 
