@@ -37,6 +37,12 @@ describe("CacheEntry", () => {
     vi.advanceTimersByTime(10_000);
     expect(entry.isValid).toBe(false);
   });
+
+  it("ttl of -1 never expires", () => {
+    const entry = new CacheEntry("key1", "useItemsQuery", { url: "/items" } as any, undefined, [], ["items"], -1);
+    vi.advanceTimersByTime(Number.MAX_SAFE_INTEGER);
+    expect(entry.isValid).toBe(true);
+  });
 });
 
 // ─── CacheManager ────────────────────────────────────────────────────────────

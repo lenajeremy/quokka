@@ -36,6 +36,7 @@ export class CacheEntry<Tags, Result = any> {
   }
 
   get isValid() {
+    if (this.ttl < 0) return true;
     return Date.now() - this.timeAdded < this.ttl;
   }
 }
