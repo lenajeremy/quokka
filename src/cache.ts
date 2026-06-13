@@ -2,6 +2,8 @@ import { TagType } from "./types";
 import { hasMatchingTags } from "./utils";
 import { QuokkaApiQueryParams } from "./types/quokka";
 
+const DEFAULT_CACHE_TTL = 30 * 1000;
+
 export class CacheEntry<Tags, Result = any> {
   readonly id: string;
   readonly name: string;
@@ -9,7 +11,8 @@ export class CacheEntry<Tags, Result = any> {
   readonly params: QuokkaApiQueryParams<Tags, Result>;
   readonly payload: any;
   readonly tags: TagType<Tags, Result>;
-  isValid: boolean;
+  ttl: number;
+  protected timeAdded: number;
 
   constructor(
     id: string,
@@ -18,6 +21,9 @@ export class CacheEntry<Tags, Result = any> {
     payload: any,
     result: any,
     tags: TagType<Tags, Result>,
+    /*
+     * Describes the time (in milliseconds) CacheEntries are expected to be valid*/
+    ttl?: number,
   ) {
     this.id = id;
     this.name = name;
@@ -25,7 +31,12 @@ export class CacheEntry<Tags, Result = any> {
     this.payload = payload;
     this.tags = tags;
     this.params = params;
-    this.isValid = true;
+    this.ttl = ttl ?? DEFAULT_CACHE_TTL;
+    this.timeAdded = Date.now();
+  }
+
+  get isValid() {
+    return Date.now() - this.timeAdded < this.ttl;
   }
 }
 
@@ -46,7 +57,7 @@ export class CacheManager {
     apiName: string,
     nameOfHook: string,
     key: string,
-    tags?: TagType<Tag, Returns>,
+    tags: TagType<Tag, Returns>,
   ): Returns | undefined {
     if (!this._apis[apiName]) return;
     const entry = this._apis[apiName].find(
@@ -69,6 +80,7 @@ export class CacheManager {
     data: Returns,
     params: QuokkaApiQueryParams<Tag, Returns>,
     payload: any,
+    ttl?: number,
   ) {
     if (!this._apis[apiName]) {
       this._apis[apiName] = [];
@@ -81,11 +93,20 @@ export class CacheManager {
         hasMatchingTags(tags, entry.tags),
     );
 
+    let entry = new CacheEntry(
+      key,
+      nameOfHook,
+      params,
+      payload,
+      data,
+      tags,
+      ttl,
+    );
+
     if (entryIndex === -1) {
-      let entry = new CacheEntry(key, nameOfHook, params, payload, data, tags);
       this._apis[apiName].push(entry);
     } else {
-      this._apis[apiName].at(entryIndex)!.result = data;
+      this._apis[apiName][entryIndex] = entry;
     }
   }
 

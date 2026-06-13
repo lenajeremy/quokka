@@ -1,7 +1,7 @@
 import { useGetPostsQuery } from '../api/postsApi'
 
 export default function BasicQuery() {
-  const { data: posts, loading, error, trigger } = useGetPostsQuery(undefined, {
+  const { data: posts, loading, error, trigger } = useGetPostsQuery(void 0, {
     fetchOnRender: true,
   })
 

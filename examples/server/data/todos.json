@@ -3,19 +3,13 @@
     "id": 2,
     "userId": 1,
     "title": "Write tests for the cache system",
-    "completed": true
-  },
-  {
-    "id": 4,
-    "userId": 2,
-    "title": "Add cache TTL support",
     "completed": false
   },
   {
     "id": 6,
     "userId": 3,
     "title": "Publish v1.1.0 to npm",
-    "completed": false
+    "completed": true
   },
   {
     "id": 7,
@@ -40,5 +34,11 @@
     "userId": 1,
     "title": "testing another",
     "completed": true
+  },
+  {
+    "id": 11,
+    "userId": 1,
+    "title": "new task",
+    "completed": false
   }
 ]

@@ -19,7 +19,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
   QueryHookType,
   QueryHook<Takes, Returns, Error, TagsString>
 > {
-  tags?: TagType<TagsString, Returns>;
+  tags: TagType<TagsString, Returns>;
   trigger?: (takes: Takes) => void;
 
   constructor(
@@ -30,7 +30,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
     },
   ) {
     super(generateParams, api);
-    this.tags = options?.providesTags;
+    this.tags = options?.providesTags || [];
   }
 
   protected generateHookName(): QueryHookType {
@@ -128,10 +128,11 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
                 apiInit.apiName,
                 queryThis.nameOfHook!,
                 key,
-                queryThis.tags || [],
+                queryThis.tags,
                 json,
                 requestParams,
                 data,
+                options?.ttl,
               );
               return json;
             } else {

@@ -1,34 +1,41 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { CacheManager, CacheEntry } from "../src/cache";
 
 // ─── CacheEntry ───────────────────────────────────────────────────────────────
 
 describe("CacheEntry", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
   it("initialises with isValid = true", () => {
-    const entry = new CacheEntry(
-      "key1",
-      "useItemsQuery",
-      { url: "/items" } as any,
-      undefined,
-      [1, 2, 3],
-      ["items"],
-    );
+    const entry = new CacheEntry("key1", "useItemsQuery", { url: "/items" } as any, undefined, [1, 2, 3], ["items"]);
     expect(entry.isValid).toBe(true);
   });
 
   it("stores result, id, and name", () => {
-    const entry = new CacheEntry(
-      "key1",
-      "useItemsQuery",
-      { url: "/items" } as any,
-      { search: "foo" },
-      { data: true },
-      ["items"],
-    );
+    const entry = new CacheEntry("key1", "useItemsQuery", { url: "/items" } as any, { search: "foo" }, { data: true }, ["items"]);
     expect(entry.id).toBe("key1");
     expect(entry.name).toBe("useItemsQuery");
     expect(entry.result).toEqual({ data: true });
     expect(entry.payload).toEqual({ search: "foo" });
+  });
+
+  it("isValid becomes false after the default TTL (30s) elapses", () => {
+    const entry = new CacheEntry("key1", "useItemsQuery", { url: "/items" } as any, undefined, [], ["items"]);
+    vi.advanceTimersByTime(60_000);
+    expect(entry.isValid).toBe(false);
+  });
+
+  it("isValid stays true well within the default TTL", () => {
+    const entry = new CacheEntry("key1", "useItemsQuery", { url: "/items" } as any, undefined, [], ["items"]);
+    vi.advanceTimersByTime(10_000);
+    expect(entry.isValid).toBe(true);
+  });
+
+  it("respects a custom ttl passed to the constructor", () => {
+    const entry = new CacheEntry("key1", "useItemsQuery", { url: "/items" } as any, undefined, [], ["items"], 5_000);
+    vi.advanceTimersByTime(10_000);
+    expect(entry.isValid).toBe(false);
   });
 });
 
@@ -39,7 +46,10 @@ describe("CacheManager", () => {
 
   beforeEach(() => {
     cache = new CacheManager();
+    vi.useFakeTimers();
   });
+
+  afterEach(() => vi.useRealTimers());
 
   describe("update", () => {
     it("creates a new api bucket on first write", () => {
@@ -64,6 +74,15 @@ describe("CacheManager", () => {
       cache.update("myApi", "useItemsQuery", "k1", ["items"], [], { url: "/items" } as any, undefined);
       cache.update("myApi", "usePostsQuery", "k2", ["posts"], [], { url: "/posts" } as any, undefined);
       expect(cache.apis["myApi"]).toHaveLength(2);
+    });
+
+    it("re-writing an existing key resets the TTL", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1], { url: "/items" } as any, undefined, 1_000);
+      vi.advanceTimersByTime(800);
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [2], { url: "/items" } as any, undefined, 1_000);
+      vi.advanceTimersByTime(800);
+      // 800 + 800 = 1600ms total, but TTL was reset at 800ms so only 800ms have elapsed since reset
+      expect(cache.get("myApi", "useItemsQuery", "k1", ["items"])).toEqual([2]);
     });
 
     it("stores separate entries for different api names", () => {
@@ -95,10 +114,16 @@ describe("CacheManager", () => {
       expect(cache.get("myApi", "useOtherQuery", "k1", ["items"])).toBeUndefined();
     });
 
-    it("returns undefined when isValid is false", () => {
-      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1, 2], { url: "/items" } as any, undefined);
-      cache.apis["myApi"][0].isValid = false;
+    it("returns undefined when the entry has expired", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1, 2], { url: "/items" } as any, undefined, 1_000);
+      vi.advanceTimersByTime(2_000);
       expect(cache.get("myApi", "useItemsQuery", "k1", ["items"])).toBeUndefined();
+    });
+
+    it("returns the result when the entry has not yet expired", () => {
+      cache.update("myApi", "useItemsQuery", "k1", ["items"], [1, 2], { url: "/items" } as any, undefined, 1_000);
+      vi.advanceTimersByTime(500);
+      expect(cache.get("myApi", "useItemsQuery", "k1", ["items"])).toEqual([1, 2]);
     });
 
     it("returns the most recent result after an update", () => {

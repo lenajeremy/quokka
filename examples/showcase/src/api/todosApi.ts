@@ -19,6 +19,7 @@ export const todosApi = createApi({
       }),
       {
         providesTags: (res) => {
+          console.log(res);
           return (
             res?.map((todo) => ({
               name: "todos",

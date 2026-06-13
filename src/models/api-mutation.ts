@@ -119,10 +119,12 @@ export class QuokkaApiMutation<
   ) {
     const r = /^use(\w+)Query$/;
 
-    for (let cacheEntry of Object.values(cacheManager.apis[this.api.apiName] ?? [])) {
+    for (let cacheEntry of Object.values(
+      cacheManager.apis[this.api.apiName] ?? [],
+    )) {
       if (
-        hasMatchingTags(this.tags, cacheEntry.tags, res) ||
-        hasMatchingTags(invalidates, cacheEntry.tags, res)
+        hasMatchingTags(this.tags, cacheEntry.tags, cacheEntry.result) ||
+        hasMatchingTags(invalidates, cacheEntry.tags, cacheEntry.result)
       ) {
         const match = cacheEntry.name.match(r);
         if (match) {

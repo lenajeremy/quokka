@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES5",
-    "module": "NodeNext",
+    "target": "ES2017",
+    "module": "ESNext",
     "declaration": true,
     "outDir": "lib",
     "strict": true,
     "lib": ["ESNext", "DOM", "ES2015"],
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "bundler",
     "baseUrl": "./src"
   },
   "include": ["src"],

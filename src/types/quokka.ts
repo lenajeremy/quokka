@@ -28,6 +28,7 @@ export type QueryHookOptions = {
   pollingInterval?: number;
   refetchOnConnection?: boolean;
   debouncedDuration?: number;
+  ttl?: number;
 };
 
 export type MutationHookOptions<TagString, Returns> = {
