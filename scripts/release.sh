@@ -35,9 +35,9 @@ pnpm build
 # ── 2. Prompt for bump type ───────────────────────────────────────────────────
 echo ""
 echo "Version bump type:"
-echo "  1) patch  (bug fixes)"
+echo "  1) major  (breaking changes)"
 echo "  2) minor  (new features, backwards compatible)"
-echo "  3) major  (breaking changes)"
+echo "  3) patch  (bug fixes)"
 echo ""
 read -p "Choice (major / minor / patch): " bump_type
 
@@ -45,6 +45,7 @@ case $bump_type in
   major|1) bump=major ;;
   minor|2) bump=minor ;;
   patch|3) bump=patch ;;
+
   *)
     echo "Invalid choice. Expected major, minor, or patch."
     exit 1
@@ -64,6 +65,16 @@ esac
 new_version="$maj.$min.$pat"
 echo ""
 echo "Bumping $current → $new_version"
+echo ""
+read -p "Confirm release v$new_version? (y/N): " confirm
+
+case $confirm in
+  y|Y) ;;
+  *)
+    echo "Aborted."
+    exit 0
+    ;;
+esac
 
 # ── 4. Write version into package.json ───────────────────────────────────────
 node -e "
