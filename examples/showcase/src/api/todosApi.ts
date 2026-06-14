@@ -18,8 +18,10 @@ export const todosApi = createApi({
         params: search ? { search } : {},
       }),
       {
-        providesTags: (res) =>
-          res?.map((todo) => ({ name: "todos", id: todo.id })) || ["todos"],
+        providesTags: (res) => [
+          "todos" as const,
+          ...(res?.map((todo) => ({ name: "todos" as const, id: todo.id })) || []),
+        ],
       },
     ),
 
@@ -46,7 +48,7 @@ export const todosApi = createApi({
         method: "PATCH",
         body: { completed: args.completed },
       }),
-      { invalidatesTags: [{ name: "todos", id: "hello" }] },
+      { invalidatesTags: (res) => res ? [{ name: "todos", id: res.id }] : ["todos"] },
     ),
   }),
 });

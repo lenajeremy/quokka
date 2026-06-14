@@ -94,25 +94,28 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
       let timeout = React.useRef<number>();
 
       React.useEffect(() => {
-        // Use argsRef so focus/online/polling always refetch with current args.
-        const refetch = () => trigger(argsRef.current, false);
+        // Focus and connection refetches respect the TTL — if the cache is
+        // still valid they serve from cache without a network request.
+        const refetchCacheAware = () => trigger(argsRef.current, true);
+        // Polling always goes to the network regardless of TTL.
+        const refetchForced = () => trigger(argsRef.current, false);
 
         if (options?.refetchOnFocus) {
-          window.addEventListener("focus", refetch);
+          window.addEventListener("focus", refetchCacheAware);
         }
 
         if (options?.refetchOnConnection) {
-          window.addEventListener("online", refetch);
+          window.addEventListener("online", refetchCacheAware);
         }
 
         if (options?.pollingInterval && options?.pollingInterval > 0) {
-          const i = setInterval(refetch, options.pollingInterval);
+          const i = setInterval(refetchForced, options.pollingInterval);
           timeout.current = i;
         }
 
         return () => {
-          window.removeEventListener("focus", refetch);
-          window.removeEventListener("online", refetch);
+          window.removeEventListener("focus", refetchCacheAware);
+          window.removeEventListener("online", refetchCacheAware);
 
           if (timeout.current) {
             clearInterval(timeout.current);

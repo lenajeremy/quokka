@@ -7,6 +7,7 @@ import Polling from './pages/Polling'
 import AuthAndUseFetch from './pages/AuthAndUseFetch'
 import Articles from './pages/Articles'
 import ArticleDetail from './pages/ArticleDetail'
+import CacheTTL from './pages/CacheTTL'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/auth-use-fetch" element={<AuthAndUseFetch />} />
             <Route path="/articles" element={<Articles />} />
             <Route path="/articles/:id" element={<ArticleDetail />} />
+            <Route path="/cache-ttl" element={<CacheTTL />} />
           </Routes>
         </main>
       </div>

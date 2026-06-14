@@ -15,7 +15,7 @@ export default function CrudInvalidation() {
   })
 
   const { trigger: createTodo, loading: creating } = useCreateTodoMutation()
-  const { trigger: deleteTodo } = useDeleteTodoMutation()
+  const { trigger: deleteTodoTrigger } = useDeleteTodoMutation()
   const { trigger: toggleTodo } = useToggleTodoMutation()
 
   React.useEffect(() => {
@@ -42,24 +42,25 @@ export default function CrudInvalidation() {
       <div className="badges">
         <span className="badge">providesTags</span>
         <span className="badge">invalidatesTags</span>
-        <span className="badge">mutations</span>
+        <span className="badge">call-time invalidates</span>
         <span className="badge">auto-refetch</span>
       </div>
 
       <div className="code-block">
-        <span className="code-comment">// Query provides the 'todos' tag</span>{'\n'}
-        {'getTodos: builder.query<void, Todo[]>(() => ({ url: \'/todos\' }), {\n'}
-        {'  providesTags: ['}
+        <span className="code-comment">// Query provides per-item tags</span>{'\n'}
+        {'getTodos: builder.query(..., {\n'}
+        {'  providesTags: (res) => res?.map(t => ({ name: '}
         <span className="code-string">'todos'</span>
-        {'],\n'}
+        {', id: t.id }))\n'}
         {'})\n\n'}
-        <span className="code-comment">// Mutations invalidate it on success</span>{'\n'}
-        {'createTodo: builder.mutation<..., Todo>(..., { invalidatesTags: ['}
+        <span className="code-comment">// createTodo: endpoint-level invalidation</span>{'\n'}
+        {'createTodo: builder.mutation(..., { invalidatesTags: ['}
         <span className="code-string">'todos'</span>
-        {'] })\n'}
-        {'deleteTodo: builder.mutation<..., void>(..., { invalidatesTags: ['}
+        {'] })\n\n'}
+        <span className="code-comment">// deleteTodo: per-call invalidation at the trigger site</span>{'\n'}
+        {'deleteTodoTrigger({ id }, { invalidates: [{ name: '}
         <span className="code-string">'todos'</span>
-        {'] })'}
+        {', id }] })'}
       </div>
 
       <div className="stats">
@@ -128,7 +129,7 @@ export default function CrudInvalidation() {
             <span className="todo-id">#{todo.id}</span>
             <button
               className="btn btn-danger"
-              onClick={() => deleteTodo({ id: todo.id })}
+              onClick={() => deleteTodoTrigger({ id: todo.id }, { invalidates: [{ name: 'todos', id: todo.id }] })}
               style={{ padding: '4px 10px', fontSize: 12 }}
             >
               Delete

@@ -8,6 +8,7 @@ import {
 } from "../types/quokka";
 import { MutationHookType, TagType } from "../types";
 import { hasMatchingTags, resolveRequestParameters } from "../utils";
+import { isArrayTag } from "../types";
 import { useQuokkaContext } from "../context";
 import { QuokkaApi } from "./quokka-api";
 import { CacheManager } from "../cache";
@@ -131,9 +132,19 @@ export class QuokkaApiMutation<
     for (let cacheEntry of Object.values(
       cacheManager.apis[this.api.apiName] ?? [],
     )) {
+      // Pre-resolve mutation tag functions using the mutation response (res),
+      // not cacheEntry.result. hasMatchingTags then only needs to resolve
+      // the query's providesTags function (using cacheEntry.result).
+      const resolvedMutationTags = this.tags
+        ? (isArrayTag(this.tags) ? this.tags : this.tags(res))
+        : undefined;
+      const resolvedInvalidates = invalidates
+        ? (isArrayTag(invalidates) ? invalidates : invalidates(res))
+        : undefined;
+
       if (
-        hasMatchingTags(this.tags, cacheEntry.tags, cacheEntry.result) ||
-        hasMatchingTags(invalidates, cacheEntry.tags, cacheEntry.result)
+        hasMatchingTags(resolvedMutationTags, cacheEntry.tags, cacheEntry.result) ||
+        hasMatchingTags(resolvedInvalidates, cacheEntry.tags, cacheEntry.result)
       ) {
         const match = cacheEntry.name.match(r);
         if (match) {

@@ -12,6 +12,7 @@ export default function Polling() {
     fetchOnRender: true,
     pollingInterval: POLL_INTERVAL,
     refetchOnFocus: true,
+    refetchOnConnection: true,
   })
 
   // Track each completed fetch
@@ -33,32 +34,39 @@ export default function Polling() {
 
   return (
     <div>
-      <h1 className="page-title">4. Polling + Focus Refetch</h1>
+      <h1 className="page-title">4. Polling + Focus + Connection Refetch</h1>
       <p className="page-desc">
         The query re-fires every {POLL_INTERVAL / 1000}s via <code>pollingInterval</code>,
-        and also immediately when the browser window regains focus via <code>refetchOnFocus</code>.
+        when the window regains focus via <code>refetchOnFocus</code>,
+        and when the browser comes back online via <code>refetchOnConnection</code>.
       </p>
 
       <div className="badges">
         <span className="badge">pollingInterval</span>
         <span className="badge">refetchOnFocus</span>
+        <span className="badge">refetchOnConnection</span>
         <span className="badge">fetchOnRender</span>
       </div>
 
       <div className="code-block">
         {'const { data, loading } = useGetPostQuery(1, {\n'}
-        {'  fetchOnRender:   '}
+        {'  fetchOnRender:       '}
         <span className="code-keyword">true</span>
         {',\n'}
-        {'  pollingInterval: '}
+        {'  pollingInterval:     '}
         <span className="code-number">30000</span>
         {',  '}
         <span className="code-comment">// re-fetch every 30 seconds</span>
         {'\n'}
-        {'  refetchOnFocus:  '}
+        {'  refetchOnFocus:      '}
         <span className="code-keyword">true</span>
         {',  '}
         <span className="code-comment">// re-fetch on tab focus</span>
+        {'\n'}
+        {'  refetchOnConnection: '}
+        <span className="code-keyword">true</span>
+        {',  '}
+        <span className="code-comment">// re-fetch when back online</span>
         {'\n}'}
       </div>
 
@@ -92,10 +100,16 @@ export default function Polling() {
         </div>
       </div>
 
-      <div className="card" style={{ background: '#fffbeb', borderColor: '#fde68a', marginBottom: 20 }}>
+      <div className="card" style={{ background: '#fffbeb', borderColor: '#fde68a', marginBottom: 12 }}>
         <p style={{ fontSize: 13, color: '#92400e' }}>
-          💡 <strong>Try it:</strong> Switch to another browser tab and come back.
-          The fetch count will increment immediately when you return — that's <code>refetchOnFocus</code> firing.
+          💡 <strong>Try it (focus):</strong> Switch to another browser tab and come back.
+          The fetch count increments immediately — that's <code>refetchOnFocus</code> firing.
+        </p>
+      </div>
+      <div className="card" style={{ background: '#f0f9ff', borderColor: '#bae6fd', marginBottom: 20 }}>
+        <p style={{ fontSize: 13, color: '#0369a1' }}>
+          💡 <strong>Try it (connection):</strong> Open DevTools → Network → set throttling to Offline, then back to Online.
+          The fetch count increments when connectivity is restored — that's <code>refetchOnConnection</code> firing.
         </p>
       </div>
 

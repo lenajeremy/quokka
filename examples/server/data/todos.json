@@ -1,33 +1,9 @@
 [
   {
-    "id": 2,
-    "userId": 1,
-    "title": "Write tests for the cache system",
-    "completed": true
-  },
-  {
-    "id": 6,
-    "userId": 3,
-    "title": "Publish v1.1.0 to npm",
-    "completed": true
-  },
-  {
-    "id": 7,
-    "userId": 3,
-    "title": "Update the documentation",
-    "completed": true
-  },
-  {
-    "id": 8,
-    "userId": 1,
-    "title": "Add in-flight request deduplication",
-    "completed": false
-  },
-  {
     "id": 9,
     "userId": 1,
     "title": "hello",
-    "completed": false
+    "completed": true
   },
   {
     "id": 10,
@@ -39,6 +15,18 @@
     "id": 11,
     "userId": 1,
     "title": "new task",
+    "completed": false
+  },
+  {
+    "id": 12,
+    "userId": 1,
+    "title": "hello",
+    "completed": false
+  },
+  {
+    "id": 13,
+    "userId": 1,
+    "title": "create something",
     "completed": false
   }
 ]
