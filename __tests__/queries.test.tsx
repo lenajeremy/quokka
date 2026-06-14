@@ -119,3 +119,157 @@ describe("useXxxQuery", () => {
     );
   });
 });
+
+// ─── fetchOnArgsChange ────────────────────────────────────────────────────────
+
+describe("fetchOnArgsChange", () => {
+  beforeEach(() => { vi.stubGlobal("fetch", vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("re-fetches when args change between renders", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+
+    const api = createApi({
+      apiName: "argsA",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItem: b.query<number, any>((id) => ({ url: `/items/${id}` })),
+      }),
+    });
+
+    const { rerender } = renderHook(
+      ({ id }: { id: number }) =>
+        api.actions.useGetItemQuery(id, { fetchOnArgsChange: true }),
+      { wrapper, initialProps: { id: 1 } },
+    );
+
+    // Change args — should trigger a fetch
+    act(() => { rerender({ id: 2 }); });
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("http://localhost/items/2", expect.any(Object)));
+  });
+
+  it("does not re-fetch when args do not change", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+
+    const api = createApi({
+      apiName: "argsB",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItem: b.query<number, any>((id) => ({ url: `/items/${id}` })),
+      }),
+    });
+
+    const { rerender } = renderHook(
+      ({ id }: { id: number }) =>
+        api.actions.useGetItemQuery(id, { fetchOnArgsChange: true }),
+      { wrapper, initialProps: { id: 1 } },
+    );
+
+    act(() => { rerender({ id: 1 }); }); // same args
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("fetches with the new args when they change", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+
+    const api = createApi({
+      apiName: "argsC",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        search: b.query<string, any[]>((q) => ({ url: "/search", params: { q } })),
+      }),
+    });
+
+    const { rerender } = renderHook(
+      ({ q }: { q: string }) =>
+        api.actions.useSearchQuery(q, { fetchOnArgsChange: true }),
+      { wrapper, initialProps: { q: "cat" } },
+    );
+
+    act(() => { rerender({ q: "dog" }); });
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("q=dog"),
+        expect.any(Object),
+      ),
+    );
+    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining("q=cat"), expect.any(Object));
+  });
+});
+
+// ─── initLoading ─────────────────────────────────────────────────────────────
+
+describe("initLoading", () => {
+  beforeEach(() => { vi.stubGlobal("fetch", vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("is true during the first automatic fetch and resets to false on completion", async () => {
+    let resolve!: (v: Response) => void;
+    vi.mocked(fetch).mockReturnValueOnce(new Promise((r) => { resolve = r; }) as any);
+
+    const api = createApi({
+      apiName: "initA",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    const { result } = renderHook(
+      () => api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.initLoading).toBe(true));
+
+    resolve(new Response(JSON.stringify([]), { status: 200 }));
+    await waitFor(() => expect(result.current.initLoading).toBe(false));
+  });
+
+  it("is false after a manual trigger — only set by automatic fetches", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }));
+
+    const api = createApi({
+      apiName: "initB",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    const { result } = renderHook(
+      () => api.actions.useGetItemsQuery(undefined),
+      { wrapper },
+    );
+
+    await act(async () => { await result.current.trigger(undefined); });
+    expect(result.current.initLoading).toBe(false);
+  });
+
+  it("stays false on subsequent refetches after the initial auto-fetch", async () => {
+    vi.mocked(fetch).mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify([]), { status: 200 })),
+    );
+
+    const api = createApi({
+      apiName: "initC",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    const { result } = renderHook(
+      () => api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.initLoading).toBe(false));
+
+    // Subsequent manual trigger must not flip initLoading back to true
+    await act(async () => { await result.current.trigger(undefined); });
+    expect(result.current.initLoading).toBe(false);
+  });
+});

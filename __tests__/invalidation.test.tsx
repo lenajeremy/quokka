@@ -247,3 +247,145 @@ describe("tagless query caching", () => {
     expect(result.current.q.data).toEqual(data);
   });
 });
+
+// ─── Tag type cross-combinations ─────────────────────────────────────────────
+
+describe("tag type cross-combinations", () => {
+  beforeEach(() => { vi.stubGlobal("fetch", vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("string invalidatesTags matches function providesTags that includes a general string tag", async () => {
+    // Regression: string "items" in invalidatesTags must match "items" returned
+    // by the providesTags function alongside per-item object tags.
+    const initial = [{ id: 1 }];
+    const created = { id: 2 };
+    const refetched = [{ id: 1 }, { id: 2 }];
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify(initial), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(created), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(refetched), { status: 200 }));
+
+    const api = createApi({
+      apiName: "crossA",
+      baseUrl: "http://localhost",
+      tags: ["items"],
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(
+          () => ({ url: "/items" }),
+          {
+            providesTags: (res) => [
+              "items" as const,
+              ...(res?.map((item) => ({ name: "items" as const, id: item.id })) || []),
+            ],
+          },
+        ),
+        createItem: b.mutation<{ name: string }, any>(
+          (body) => ({ url: "/items", method: "POST", body }),
+          { invalidatesTags: ["items"] },
+        ),
+      }),
+    });
+
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useCreateItemMutation(),
+    }), { wrapper });
+
+    await waitFor(() => expect(result.current.q.data).toEqual(initial));
+    await act(async () => { await result.current.m.trigger({ name: "New" }); });
+    await waitFor(() => expect(result.current.q.data).toEqual(refetched));
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("function invalidatesTags receives the mutation response, not the cached query result", async () => {
+    // Regression: the function was previously called with cacheEntry.result
+    // (an array of items), so res.id was undefined and no tag ever matched.
+    const initial = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const mutResponse = { id: 2 };
+    const refetched = [{ id: 1 }, { id: 3 }];
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify(initial), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(mutResponse), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(refetched), { status: 200 }));
+
+    const api = createApi({
+      apiName: "crossB",
+      baseUrl: "http://localhost",
+      tags: ["items"],
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(
+          () => ({ url: "/items" }),
+          {
+            providesTags: (res) =>
+              res?.map((item) => ({ name: "items" as const, id: item.id })) || [],
+          },
+        ),
+        removeItem: b.mutation<{ id: number }, any>(
+          (args) => ({ url: `/items/${args.id}`, method: "DELETE" }),
+          {
+            // Must receive { id: 2 } (mutation response), not the cached array
+            invalidatesTags: (res) => res ? [{ name: "items" as const, id: res.id }] : [],
+          },
+        ),
+      }),
+    });
+
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useRemoveItemMutation(),
+    }), { wrapper });
+
+    await waitFor(() => expect(result.current.q.data).toEqual(initial));
+    await act(async () => { await result.current.m.trigger({ id: 2 }); });
+    await waitFor(() => expect(result.current.q.data).toEqual(refetched));
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("function call-time invalidates also receives the mutation response", async () => {
+    const initial = [{ id: 1 }, { id: 2 }];
+    const mutResponse = { id: 1 };
+    const refetched = [{ id: 2 }];
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify(initial), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(mutResponse), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(refetched), { status: 200 }));
+
+    const api = createApi({
+      apiName: "crossC",
+      baseUrl: "http://localhost",
+      tags: ["items"],
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(
+          () => ({ url: "/items" }),
+          {
+            providesTags: (res) =>
+              res?.map((item) => ({ name: "items" as const, id: item.id })) || [],
+          },
+        ),
+        removeItem: b.mutation<{ id: number }, any>(
+          (args) => ({ url: `/items/${args.id}`, method: "DELETE" }),
+        ),
+      }),
+    });
+
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useRemoveItemMutation(),
+    }), { wrapper });
+
+    await waitFor(() => expect(result.current.q.data).toEqual(initial));
+
+    // Per-call function invalidates — receives mutation response { id: 1 }
+    await act(async () => {
+      await result.current.m.trigger({ id: 1 }, {
+        invalidates: (res: any) => res ? [{ name: "items" as const, id: res.id }] : [],
+      });
+    });
+
+    await waitFor(() => expect(result.current.q.data).toEqual(refetched));
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+});
