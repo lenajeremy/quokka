@@ -331,16 +331,14 @@ describe("cache invalidation", () => {
       }),
     });
 
-    const { result: q } = renderHook(
-      () => api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
-      { wrapper },
-    );
-    await waitFor(() => expect(q.current.data).toEqual(initial));
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useCreateItemMutation(),
+    }), { wrapper });
 
-    const { result: m } = renderHook(() => api.actions.useCreateItemMutation(), { wrapper });
-    await act(async () => { await m.current.trigger({ name: "New" }); });
-
-    await waitFor(() => expect(q.current.data).toEqual(updated));
+    await waitFor(() => expect(result.current.q.data).toEqual(initial));
+    await act(async () => { await result.current.m.trigger({ name: "New" }); });
+    await waitFor(() => expect(result.current.q.data).toEqual(updated));
     expect(fetch).toHaveBeenCalledTimes(3);
   });
 
@@ -369,16 +367,14 @@ describe("cache invalidation", () => {
       }),
     });
 
-    const { result: q } = renderHook(
-      () => api.actions.useGetItemQuery(5, { fetchOnRender: true }),
-      { wrapper },
-    );
-    await waitFor(() => expect(q.current.data).toEqual(item));
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemQuery(5, { fetchOnRender: true }),
+      m: api.actions.useUpdateItemMutation(),
+    }), { wrapper });
 
-    const { result: m } = renderHook(() => api.actions.useUpdateItemMutation(), { wrapper });
-    await act(async () => { await m.current.trigger({ id: 5, title: "Updated" }); });
-
-    await waitFor(() => expect(q.current.data).toEqual(patched));
+    await waitFor(() => expect(result.current.q.data).toEqual(item));
+    await act(async () => { await result.current.m.trigger({ id: 5, title: "Updated" }); });
+    await waitFor(() => expect(result.current.q.data).toEqual(patched));
   });
 
   it("call-time invalidates option also triggers refetch", async () => {
@@ -406,19 +402,14 @@ describe("cache invalidation", () => {
       }),
     });
 
-    const { result: q } = renderHook(
-      () => api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
-      { wrapper },
-    );
-    await waitFor(() => expect(q.current.data).toEqual(initial));
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useDoActionMutation({ invalidates: ["items"] }),
+    }), { wrapper });
 
-    const { result: m } = renderHook(
-      () => api.actions.useDoActionMutation({ invalidates: ["items"] }),
-      { wrapper },
-    );
-    await act(async () => { await m.current.trigger(undefined); });
-
-    await waitFor(() => expect(q.current.data).toEqual(refetched));
+    await waitFor(() => expect(result.current.q.data).toEqual(initial));
+    await act(async () => { await result.current.m.trigger(undefined); });
+    await waitFor(() => expect(result.current.q.data).toEqual(refetched));
   });
 
   it("non-matching tags do not trigger a refetch", async () => {
@@ -445,18 +436,16 @@ describe("cache invalidation", () => {
       }),
     });
 
-    const { result: q } = renderHook(
-      () => api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
-      { wrapper },
-    );
-    await waitFor(() => expect(q.current.data).toEqual(initial));
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useDoUnrelatedMutation(),
+    }), { wrapper });
 
-    const { result: m } = renderHook(() => api.actions.useDoUnrelatedMutation(), { wrapper });
-    await act(async () => { await m.current.trigger(undefined); });
+    await waitFor(() => expect(result.current.q.data).toEqual(initial));
+    await act(async () => { await result.current.m.trigger(undefined); });
 
-    // Only 2 fetches — initial query + mutation. No refetch.
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(q.current.data).toEqual(initial);
+    expect(result.current.q.data).toEqual(initial);
   });
 
   it("mutation with no invalidatesTags and no call-time invalidates leaves cache untouched", async () => {
@@ -477,23 +466,20 @@ describe("cache invalidation", () => {
         ),
         doThing: b.mutation<void, any>(
           () => ({ url: "/thing", method: "POST" }),
-          // no invalidatesTags
         ),
       }),
     });
 
-    const { result: q } = renderHook(
-      () => api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
-      { wrapper },
-    );
-    await waitFor(() => expect(q.current.data).toEqual(initial));
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useDoThingMutation(),
+    }), { wrapper });
 
-    const { result: m } = renderHook(() => api.actions.useDoThingMutation(), { wrapper });
-    await act(async () => { await m.current.trigger(undefined); });
+    await waitFor(() => expect(result.current.q.data).toEqual(initial));
+    await act(async () => { await result.current.m.trigger(undefined); });
 
-    // Only 2 fetches — no refetch triggered.
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(q.current.data).toEqual(initial);
+    expect(result.current.q.data).toEqual(initial);
   });
 });
 
@@ -594,5 +580,175 @@ describe("debouncedDuration", () => {
       expect.any(Object),
     );
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── In-flight deduplication ──────────────────────────────────────────────────
+
+describe("in-flight deduplication", () => {
+  beforeEach(() => { vi.stubGlobal("fetch", vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("two concurrent triggers for the same args fire only one network request", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify([1, 2, 3]), { status: 200 }));
+
+    const api = createApi({
+      apiName: "dedupA",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    const { result } = renderHook(() => api.actions.useGetItemsQuery(undefined), { wrapper });
+
+    await act(async () => {
+      await Promise.all([
+        result.current.trigger(undefined),
+        result.current.trigger(undefined),
+      ]);
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("both concurrent callers receive the same resolved value", async () => {
+    const data = [{ id: 1 }];
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(data), { status: 200 }));
+
+    const api = createApi({
+      apiName: "dedupB",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    const { result } = renderHook(() => api.actions.useGetItemsQuery(undefined), { wrapper });
+
+    let r1: any, r2: any;
+    await act(async () => {
+      [r1, r2] = await Promise.all([
+        result.current.trigger(undefined),
+        result.current.trigger(undefined),
+      ]);
+    });
+
+    expect(r1).toEqual(data);
+    expect(r2).toEqual(data);
+  });
+
+  it("a new request fires after the in-flight one completes", async () => {
+    vi.mocked(fetch).mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify([]), { status: 200 })),
+    );
+
+    const api = createApi({
+      apiName: "dedupC",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    const { result } = renderHook(() => api.actions.useGetItemsQuery(undefined), { wrapper });
+
+    await act(async () => { await result.current.trigger(undefined); });
+    await act(async () => { await result.current.trigger(undefined); });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("dedup path clears stale error so a successful dedup does not leave error + data simultaneously", async () => {
+    vi.mocked(fetch)
+      .mockRejectedValueOnce(new Error("network failure"))
+      .mockResolvedValue(new Response(JSON.stringify([1]), { status: 200 }));
+
+    const api = createApi({
+      apiName: "dedupD",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    const { result } = renderHook(() => api.actions.useGetItemsQuery(undefined), { wrapper });
+
+    // First request fails — component has a stale error
+    await act(async () => { try { await result.current.trigger(undefined); } catch {} });
+    expect(result.current.error).toBeDefined();
+
+    // Second request succeeds; a third concurrent call joins via dedup
+    await act(async () => {
+      await Promise.all([
+        result.current.trigger(undefined),
+        result.current.trigger(undefined),
+      ]);
+    });
+
+    expect(result.current.data).toEqual([1]);
+    expect(result.current.error).toBeUndefined();
+  });
+});
+
+// ─── Tagless query caching ────────────────────────────────────────────────────
+
+describe("tagless query caching", () => {
+  beforeEach(() => { vi.stubGlobal("fetch", vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("two components under the same provider both get data — only one network request fires", async () => {
+    const data = [{ id: 1 }];
+    vi.mocked(fetch).mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify(data), { status: 200 })),
+    );
+
+    const api = createApi({
+      apiName: "taglessA",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+      }),
+    });
+
+    // Both hooks rendered in the same tree — share the same CacheManager
+    const { result } = renderHook(() => ({
+      q1: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      q2: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+    }), { wrapper });
+
+    await waitFor(() => expect(result.current.q1.data).toEqual(data));
+    await waitFor(() => expect(result.current.q2.data).toEqual(data));
+
+    // Dedup or cache ensures only one network request
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("tagless mutation does not invalidate tagless query", async () => {
+    const data = [{ id: 1 }];
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify(data), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+    const api = createApi({
+      apiName: "taglessB",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        getItems: b.query<void, any[]>(() => ({ url: "/items" })),
+        doThing: b.mutation<void, any>(() => ({ url: "/thing", method: "POST" })),
+      }),
+    });
+
+    const { result } = renderHook(() => ({
+      q: api.actions.useGetItemsQuery(undefined, { fetchOnRender: true }),
+      m: api.actions.useDoThingMutation(),
+    }), { wrapper });
+
+    await waitFor(() => expect(result.current.q.data).toEqual(data));
+    await act(async () => { await result.current.m.trigger(undefined); });
+
+    // Only 2 fetches — tagless mutation must not invalidate tagless query
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(result.current.q.data).toEqual(data);
   });
 });

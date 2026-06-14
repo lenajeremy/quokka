@@ -13,6 +13,12 @@ import {
   resolveRequestParameters,
 } from "../utils";
 import { QuokkaApi } from "./quokka-api";
+import { CacheManager } from "../cache";
+
+type ProviderState<Takes, Returns> = {
+  triggers: Set<(takes: Takes) => void>;
+  inFlight: Map<string, Promise<Returns | undefined>>;
+};
 
 export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
   (a: Takes) => QuokkaApiQueryParams<TagsString, Returns>,
@@ -20,7 +26,17 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
   QueryHook<Takes, Returns, Error, TagsString>
 > {
   tags: TagType<TagsString, Returns>;
-  triggers: Set<(takes: Takes) => void> = new Set();
+
+  // Per-provider state — keyed by CacheManager instance so separate
+  // QuokkaProvider trees each get their own isolated triggers and inFlight map.
+  private providerState = new WeakMap<CacheManager, ProviderState<Takes, Returns>>();
+
+  getProviderState(cm: CacheManager): ProviderState<Takes, Returns> {
+    if (!this.providerState.has(cm)) {
+      this.providerState.set(cm, { triggers: new Set(), inFlight: new Map() });
+    }
+    return this.providerState.get(cm)!;
+  }
 
   constructor(
     generateParams: (a: Takes) => QuokkaApiQueryParams<TagsString, Returns>,
@@ -56,6 +72,11 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
       const hasArgsChangedRef = React.useRef(false);
       const isInitialRenderRef = React.useRef(true);
 
+      // Always-current ref for args so event-listener and polling closures
+      // see the latest args without needing to be re-registered.
+      const argsRef = React.useRef(args);
+      argsRef.current = args;
+
       const [data, setData] = React.useState<Returns | undefined>();
       const [error, setError] = React.useState<Error | undefined>();
       const [loading, setLoading] = React.useState(false);
@@ -73,32 +94,36 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
       let timeout = React.useRef<number>();
 
       React.useEffect(() => {
-        const focusHandler = () => trigger(args, false);
+        // Use argsRef so focus/online/polling always refetch with current args.
+        const refetch = () => trigger(argsRef.current, false);
 
         if (options?.refetchOnFocus) {
-          window.addEventListener("focus", focusHandler);
+          window.addEventListener("focus", refetch);
+        }
+
+        if (options?.refetchOnConnection) {
+          window.addEventListener("online", refetch);
         }
 
         if (options?.pollingInterval && options?.pollingInterval > 0) {
-          const i = setInterval(focusHandler, options.pollingInterval);
+          const i = setInterval(refetch, options.pollingInterval);
           timeout.current = i;
         }
 
         return () => {
-          window.removeEventListener("focus", focusHandler);
+          window.removeEventListener("focus", refetch);
+          window.removeEventListener("online", refetch);
 
           if (timeout.current) {
             clearInterval(timeout.current);
           }
         };
-      }, []);
+      }, [options?.refetchOnFocus, options?.refetchOnConnection, options?.pollingInterval]);
 
       const trigger = React.useCallback(async function (
         data: Takes,
         fetchFromCache = false,
       ): Promise<Returns | undefined> {
-        let err: any = null;
-
         const requestParams = resolveRequestParameters(
           apiInit,
           {
@@ -108,18 +133,53 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
           getStateRef.current!,
         );
 
-        const key = await generateRequestKey(requestParams);
-        const value = cacheManagerRef.current!.get<Returns, TagsString>(
-          apiInit.apiName,
-          queryThis.nameOfHook!,
-          key,
-          queryThis.tags,
-        );
+        // Include sorted headers in the dedup key so requests with different
+        // auth tokens (same URL, different Authorization header) are not merged.
+        const headerParts: string[] = [];
+        requestParams.headers?.forEach((v, k) => headerParts.push(`${k}=${v}`));
+        const dedupKey = `${requestParams.url}::${requestParams.method ?? "GET"}::${headerParts.sort().join("&")}`;
 
-        if (value && fetchFromCache) {
-          setData(value);
-          return value;
-        } else {
+        const { inFlight } = queryThis.getProviderState(cacheManagerRef.current!);
+
+        if (inFlight.has(dedupKey)) {
+          // A request for this exact endpoint+user is already in-flight.
+          // Attach THIS component's state setters to the shared promise so
+          // both callers see loading → data/error updates.
+          const existing = inFlight.get(dedupKey)!;
+          setLoading(true);
+          setError(undefined); // clear any stale error from a prior failed request
+          return existing
+            .then((result) => {
+              if (result !== undefined) setData(result);
+              return result;
+            })
+            .catch((err: Error) => {
+              setError(err);
+              throw err;
+            })
+            .finally(() => {
+              setLoading(false);
+              setInitLoading(false);
+            });
+        }
+
+        const request = (async () => {
+          let err: any = null;
+
+          const key = await generateRequestKey(requestParams);
+          const value = cacheManagerRef.current!.get<Returns, TagsString>(
+            apiInit.apiName,
+            queryThis.nameOfHook!,
+            key,
+            queryThis.tags,
+          );
+
+          if (value && fetchFromCache) {
+            setData(value);
+            inFlight.delete(dedupKey); // prevent the resolved promise leaking in the map
+            return value;
+          }
+
           try {
             setLoading(true);
             setError(undefined);
@@ -153,17 +213,22 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
           } finally {
             setLoading(false);
             setInitLoading(false);
+            inFlight.delete(dedupKey);
             if (err) {
               setError(err);
               throw err;
             }
           }
-        }
+        })();
+
+        inFlight.set(dedupKey, request);
+        return request;
       }, []);
 
       React.useEffect(() => {
-        queryThis.triggers.add(trigger);
-        return () => { queryThis.triggers.delete(trigger); };
+        const { triggers } = queryThis.getProviderState(cacheManagerRef.current!);
+        triggers.add(trigger);
+        return () => { triggers.delete(trigger); };
       }, [trigger]);
 
       const publicTrigger = React.useCallback(

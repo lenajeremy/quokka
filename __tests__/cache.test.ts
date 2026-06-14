@@ -106,6 +106,19 @@ describe("CacheManager", () => {
       expect(result).toEqual([1, 2, 3]);
     });
 
+    it("returns the cached result for a tagless entry (empty providesTags)", () => {
+      cache.update("myApi", "useItemsQuery", "k1", [], [1, 2, 3], { url: "/items" } as any, undefined);
+      const result = cache.get("myApi", "useItemsQuery", "k1", []);
+      expect(result).toEqual([1, 2, 3]);
+    });
+
+    it("update replaces an existing tagless entry rather than pushing a duplicate", () => {
+      cache.update("myApi", "useItemsQuery", "k1", [], [1], { url: "/items" } as any, undefined);
+      cache.update("myApi", "useItemsQuery", "k1", [], [2], { url: "/items" } as any, undefined);
+      expect(cache.apis["myApi"]).toHaveLength(1);
+      expect(cache.get("myApi", "useItemsQuery", "k1", [])).toEqual([2]);
+    });
+
     it("returns undefined for an unknown api", () => {
       expect(cache.get("noSuchApi", "useItemsQuery", "k1", ["items"])).toBeUndefined();
     });

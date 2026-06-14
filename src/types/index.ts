@@ -34,7 +34,6 @@ export function isFunctionTag<T, R>(
   return !isArrayTag(tag);
 }
 
-export * from "./context";
 export * from "./fetch";
 export * from "./quokka";
 

@@ -1,5 +1,5 @@
 import { TagType } from "./types";
-import { hasMatchingTags } from "./utils";
+import { matchesCacheEntry } from "./utils";
 import { QuokkaApiQueryParams } from "./types/quokka";
 
 const DEFAULT_CACHE_TTL = 30 * 1000;
@@ -65,7 +65,7 @@ export class CacheManager {
       (entry) =>
         entry.name === nameOfHook &&
         entry.id === key &&
-        hasMatchingTags(tags, entry.tags) &&
+        matchesCacheEntry(tags, entry.tags) &&
         entry.isValid,
     );
 
@@ -91,7 +91,7 @@ export class CacheManager {
       (entry) =>
         entry.name === nameOfHook &&
         entry.id === key &&
-        hasMatchingTags(tags, entry.tags),
+        matchesCacheEntry(tags, entry.tags),
     );
 
     let entry = new CacheEntry(

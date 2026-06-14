@@ -138,7 +138,12 @@ export class QuokkaApiMutation<
         const match = cacheEntry.name.match(r);
         if (match) {
           const key = match[1].charAt(0).toLowerCase() + match[1].substring(1);
-          this.api.queries[key].triggers.forEach(t => t(cacheEntry.payload));
+          const { triggers } = this.api.queries[key].getProviderState(cacheManager);
+          // Fire-and-forget: wrap each async trigger in a catch so one
+          // failed refetch doesn't silently abort the rest.
+          triggers.forEach(t => {
+            Promise.resolve(t(cacheEntry.payload)).catch(() => {});
+          });
         }
       }
     }

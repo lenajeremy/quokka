@@ -7,12 +7,12 @@ export function useQuokkaContext() {
     return React.useContext(GeneralQuokkaContext)
 }
 
-const cacheManager = new CacheManager()
-
 export function QuokkaProvider<RootState>({ children, getState }: {
     children: React.ReactNode;
     getState: () => RootState
 }) {
+    const [cacheManager] = React.useState(() => new CacheManager());
+
     return (
         <GeneralQuokkaContext.Provider value={{ cacheManager, getState }}>
             {children}

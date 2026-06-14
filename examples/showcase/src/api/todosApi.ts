@@ -18,15 +18,8 @@ export const todosApi = createApi({
         params: search ? { search } : {},
       }),
       {
-        providesTags: (res) => {
-          console.log(res);
-          return (
-            res?.map((todo) => ({
-              name: "todos",
-              id: todo.id,
-            })) || ["todos"]
-          );
-        },
+        providesTags: (res) =>
+          res?.map((todo) => ({ name: "todos", id: todo.id })) || ["todos"],
       },
     ),
 

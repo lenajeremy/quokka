@@ -196,6 +196,20 @@ async function generateSHA256Hash(message: string): Promise<string> {
   return h.toString(16).padStart(8, "0");
 }
 
+// Used for cache identity (get/update): two tagless entries are the same entry.
+// Distinct from hasMatchingTags which is used for invalidation and correctly
+// returns false when both arrays are empty (a tagless mutation should not
+// invalidate a tagless query).
+export function matchesCacheEntry<T extends string, R>(
+  tags: TagType<T, R>,
+  entryTags: TagType<T, R>,
+): boolean {
+  if (isArrayTag(tags) && tags.length === 0 && isArrayTag(entryTags) && entryTags.length === 0) {
+    return true;
+  }
+  return hasMatchingTags(tags, entryTags);
+}
+
 export function hasMatchingTags<T extends string, R>(
   mTags?: TagType<T, R>,
   qTags?: TagType<T, R>,
