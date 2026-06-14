@@ -178,14 +178,22 @@ function isObject(obj: any): obj is Record<string, any> {
  * `generateSHA256Hash` generates a unique hash provided a string.
  * */
 async function generateSHA256Hash(message: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(message);
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(message);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
+  }
 
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  // Fallback for non-secure origins (HTTP) and Node without Web Crypto
+  let h = 0x811c9dc5;
+  for (let i = 0; i < message.length; i++) {
+    h ^= message.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
 }
 
 export function hasMatchingTags<T extends string, R>(
@@ -198,7 +206,7 @@ export function hasMatchingTags<T extends string, R>(
   const mutationTagsValue = isArrayTag(mTags) ? mTags : mTags(res);
   const queryTagsValue = isArrayTag(qTags) ? qTags : qTags(res);
 
-  if (mutationTagsValue.length == 0 && queryTagsValue.length == 0) return true;
+  if (mutationTagsValue.length == 0 || queryTagsValue.length == 0) return false;
 
   for (const mTag of mutationTagsValue) {
     for (const qTag of queryTagsValue) {

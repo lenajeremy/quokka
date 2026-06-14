@@ -122,16 +122,15 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
         } else {
           try {
             setLoading(true);
-            setData(undefined);
             setError(undefined);
 
             const res = await fetch(requestParams.url, {
               method: requestParams.method,
               headers: requestParams.headers,
             });
-            const json = await res.json();
 
             if (res.ok) {
+              const json = await res.json();
               setData(json);
               cacheManagerRef.current!.update(
                 apiInit.apiName,
@@ -145,7 +144,8 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
               );
               return json;
             } else {
-              err = json;
+              try { err = await res.json(); }
+              catch { err = { status: res.status, statusText: res.statusText }; }
             }
           } catch (err) {
             setError(err as Error);

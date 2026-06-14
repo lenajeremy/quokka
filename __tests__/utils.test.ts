@@ -163,8 +163,8 @@ describe("hasMatchingTags", () => {
     expect(hasMatchingTags(["todos"], undefined)).toBe(false);
   });
 
-  it("returns true when both arrays are empty", () => {
-    expect(hasMatchingTags([], [])).toBe(true);
+  it("returns false when both arrays are empty", () => {
+    expect(hasMatchingTags([], [])).toBe(false);
   });
 
   it("matches identical string tags", () => {

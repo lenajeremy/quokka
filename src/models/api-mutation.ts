@@ -87,9 +87,9 @@ export class QuokkaApiMutation<
                 ? requestParams.body
                 : JSON.stringify(requestParams.body),
           });
-          const json = await res.json();
 
           if (res.ok) {
+            const json = await res.json();
             if (cacheManagerRef.current) {
               mutationThis.invalidateCache(
                 cacheManagerRef.current,
@@ -100,7 +100,8 @@ export class QuokkaApiMutation<
             setData(json);
             return json;
           } else {
-            err = json;
+            try { err = await res.json(); }
+            catch { err = { status: res.status, statusText: res.statusText }; }
           }
         } catch (err) {
           setError(err as Error);
