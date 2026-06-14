@@ -496,3 +496,103 @@ describe("cache invalidation", () => {
     expect(q.current.data).toEqual(initial);
   });
 });
+
+// ─── debouncedDuration ────────────────────────────────────────────────────────
+
+describe("debouncedDuration", () => {
+  beforeEach(() => { vi.stubGlobal("fetch", vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("rapid arg changes fire only one fetch after the debounce window", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify([]), { status: 200 }));
+
+    const api = createApi({
+      apiName: "debounceA",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        search: b.query<string, any[]>((q) => ({ url: "/search", params: { q } })),
+      }),
+    });
+
+    const { rerender } = renderHook(
+      ({ q }: { q: string }) =>
+        api.actions.useSearchQuery(q, { fetchOnArgsChange: true, debouncedDuration: 50 }),
+      { wrapper, initialProps: { q: "a" } },
+    );
+
+    // rapid changes — all within debounce window
+    act(() => { rerender({ q: "ab" }); });
+    act(() => { rerender({ q: "abc" }); });
+    act(() => { rerender({ q: "abcd" }); });
+
+    expect(fetch).not.toHaveBeenCalled();
+
+    // wait for debounce to settle and fetch to fire
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1), { timeout: 300 });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("q=abcd"),
+      expect.any(Object),
+    );
+  });
+
+  it("fetch does not fire until the debounce window has elapsed", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify([]), { status: 200 }));
+
+    const api = createApi({
+      apiName: "debounceB",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        search: b.query<string, any[]>((q) => ({ url: "/search", params: { q } })),
+      }),
+    });
+
+    const { rerender } = renderHook(
+      ({ q }: { q: string }) =>
+        api.actions.useSearchQuery(q, { fetchOnArgsChange: true, debouncedDuration: 100 }),
+      { wrapper, initialProps: { q: "a" } },
+    );
+
+    act(() => { rerender({ q: "ab" }); });
+
+    // should not have fired yet immediately after rerender
+    expect(fetch).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1), { timeout: 300 });
+  });
+
+  it("each intermediate arg change resets the debounce timer", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify([]), { status: 200 }));
+
+    const api = createApi({
+      apiName: "debounceC",
+      baseUrl: "http://localhost",
+      endpoints: (b) => ({
+        search: b.query<string, any[]>((q) => ({ url: "/search", params: { q } })),
+      }),
+    });
+
+    const { rerender } = renderHook(
+      ({ q }: { q: string }) =>
+        api.actions.useSearchQuery(q, { fetchOnArgsChange: true, debouncedDuration: 100 }),
+      { wrapper, initialProps: { q: "a" } },
+    );
+
+    act(() => { rerender({ q: "ab" }); });
+    // reset before window closes
+    await new Promise((r) => setTimeout(r, 60));
+    act(() => { rerender({ q: "abc" }); });
+
+    // 60ms after last change — still within debounce window
+    expect(fetch).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1), { timeout: 300 });
+
+    // only the final args were sent
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("q=abc"),
+      expect.any(Object),
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});

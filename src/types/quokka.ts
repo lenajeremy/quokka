@@ -42,7 +42,7 @@ export type QueryHook<Takes, Returns, Error, TagString> = (
 
 export type MutationHook<Takes, Returns, Error, TagString> = (
   options?: MutationHookOptions<TagString, Returns>,
-) => UseFetchReturn<Takes, Returns, Error>;
+) => UseFetchReturn<Takes, Returns, Error, MutationHookOptions<TagString, Returns>>;
 
 type HookSuffix<T, Tags> =
   T extends QuokkaApiQuery<any, any, Tags>

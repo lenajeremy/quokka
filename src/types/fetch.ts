@@ -9,9 +9,9 @@
  * console.log(res.data, res.trigger, res.error, res.loading)
  * ```
 */
-export type UseFetchReturn<CallArgs, ReturnArgs, TError = unknown> = {
+export type UseFetchReturn<CallArgs, ReturnArgs, TError = unknown, TriggerOptions = void> = {
   data: ReturnArgs | undefined;
-  trigger: (args: CallArgs) => Promise<ReturnArgs | undefined>;
+  trigger: (args: CallArgs, options?: TriggerOptions) => Promise<ReturnArgs | undefined>;
   error: TError | undefined;
   loading: boolean;
   initLoading?: boolean;

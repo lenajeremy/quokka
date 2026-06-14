@@ -3,6 +3,7 @@ import { QuokkaApiAction } from "./api-action";
 import {
   CreateApiOptions,
   MutationHook,
+  MutationHookOptions,
   QuokkaApiMutationParams,
 } from "../types/quokka";
 import { MutationHookType, TagType } from "../types";
@@ -54,17 +55,24 @@ export class QuokkaApiMutation<
       const [loading, setLoading] = React.useState(false);
       const { getState, cacheManager } = useQuokkaContext();
 
+      const cacheManagerRef = React.useRef(cacheManager);
+      const getStateRef = React.useRef(getState);
+      const optionsRef = React.useRef(options);
+      cacheManagerRef.current = cacheManager;
+      getStateRef.current = getState;
+      optionsRef.current = options;
+
       const trigger = React.useCallback(async function (
         data: Takes,
+        callTimeOptions?: MutationHookOptions<TagString, Returns>,
       ): Promise<Returns | undefined> {
+        let err = null;
+
         const requestParams = resolveRequestParameters(
           apiInit,
           params(data),
-          getState!,
+          getStateRef.current!,
         );
-
-        // const key = await generateRequestKey(requestParams)
-        let err = null;
 
         try {
           setLoading(true);
@@ -82,11 +90,11 @@ export class QuokkaApiMutation<
           const json = await res.json();
 
           if (res.ok) {
-            if (cacheManager) {
+            if (cacheManagerRef.current) {
               mutationThis.invalidateCache(
-                cacheManager,
+                cacheManagerRef.current,
                 json,
-                options?.invalidates,
+                callTimeOptions?.invalidates ?? optionsRef.current?.invalidates,
               );
             }
             setData(json);
@@ -129,7 +137,7 @@ export class QuokkaApiMutation<
         const match = cacheEntry.name.match(r);
         if (match) {
           const key = match[1].charAt(0).toLowerCase() + match[1].substring(1);
-          this.api.queries[key].trigger!(cacheEntry.payload);
+          this.api.queries[key].triggers.forEach(t => t(cacheEntry.payload));
         }
       }
     }

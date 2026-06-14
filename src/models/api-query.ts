@@ -20,7 +20,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
   QueryHook<Takes, Returns, Error, TagsString>
 > {
   tags: TagType<TagsString, Returns>;
-  trigger?: (takes: Takes) => void;
+  triggers: Set<(takes: Takes) => void> = new Set();
 
   constructor(
     generateParams: (a: Takes) => QuokkaApiQueryParams<TagsString, Returns>,
@@ -62,7 +62,14 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
       const [initLoading, setInitLoading] = React.useState(false);
 
       const { cacheManager, getState } = useQuokkaContext();
-      let err: any = null;
+
+      const cacheManagerRef = React.useRef(cacheManager);
+      const getStateRef = React.useRef(getState);
+      const optionsRef = React.useRef(options);
+      cacheManagerRef.current = cacheManager;
+      getStateRef.current = getState;
+      optionsRef.current = options;
+
       let timeout = React.useRef<number>();
 
       React.useEffect(() => {
@@ -90,17 +97,19 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
         data: Takes,
         fetchFromCache = false,
       ): Promise<Returns | undefined> {
+        let err: any = null;
+
         const requestParams = resolveRequestParameters(
           apiInit,
           {
             ...initRef.current,
             ...params(data),
           },
-          getState!,
+          getStateRef.current!,
         );
 
         const key = await generateRequestKey(requestParams);
-        const value = cacheManager!.get<Returns, TagsString>(
+        const value = cacheManagerRef.current!.get<Returns, TagsString>(
           apiInit.apiName,
           queryThis.nameOfHook!,
           key,
@@ -124,7 +133,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
 
             if (res.ok) {
               setData(json);
-              cacheManager!.update(
+              cacheManagerRef.current!.update(
                 apiInit.apiName,
                 queryThis.nameOfHook!,
                 key,
@@ -132,7 +141,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
                 json,
                 requestParams,
                 data,
-                options?.ttl,
+                optionsRef.current?.ttl,
               );
               return json;
             } else {
@@ -143,6 +152,7 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
             throw err;
           } finally {
             setLoading(false);
+            setInitLoading(false);
             if (err) {
               setError(err);
               throw err;
@@ -151,7 +161,15 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
         }
       }, []);
 
-      queryThis.trigger = trigger;
+      React.useEffect(() => {
+        queryThis.triggers.add(trigger);
+        return () => { queryThis.triggers.delete(trigger); };
+      }, [trigger]);
+
+      const publicTrigger = React.useCallback(
+        (data: Takes) => trigger(data, false),
+        [trigger],
+      );
 
       const debouncedTrigger = React.useMemo(
         () => debounce(trigger, options?.debouncedDuration || 0),
@@ -179,9 +197,9 @@ export class QuokkaApiQuery<Takes, Returns, TagsString> extends QuokkaApiAction<
           hasRunFetchRef.current = true;
           setInitLoading(true);
         }
-      }, [options, debouncedTrigger, args, params]);
+      }, [options?.fetchOnRender, options?.fetchOnArgsChange, debouncedTrigger, args]);
 
-      return { data, trigger, error, loading, initLoading };
+      return { data, trigger: publicTrigger, error, loading, initLoading };
     };
 
     return useQuery;

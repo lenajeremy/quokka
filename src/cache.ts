@@ -125,7 +125,6 @@ export class CacheManager {
       if (cacheEntry.id === key) {
         toDelete = cacheEntry;
       }
-
       return cacheEntry.id !== key;
     });
 
