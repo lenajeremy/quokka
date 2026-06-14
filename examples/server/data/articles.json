@@ -9,7 +9,7 @@
   },
   {
     "id": 2,
-    "title": "Understanding Cache Invalidation and Validation yippeeeee",
+    "title": "Understanding Cache Invalidation and Validation",
     "body": "Cache invalidation is one of the two hard problems in computer science — the other being naming things. In the context of data fetching, it means: after a write, which reads need to be considered stale?\n\nTag-based invalidation gives you a declarative answer. You annotate each query with the data it depends on (providesTags), and each mutation with the data it changes (invalidatesTags). The framework does the matching.\n\nThe power comes from fine-grained tags. Instead of invalidating all posts after an update, you can invalidate only { name: 'post', id: 5 }. Only queries that provided that exact tag will refetch.\n\n\nThis is the greatest thing you'd ever see. this is beautiful man",
     "author": "Bob Martinez",
     "category": "Architecture and Finance",
